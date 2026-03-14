@@ -34,17 +34,6 @@ app.use("/api/v1", order);
 app.use("/api/v1", payment);
 app.use("/api/v1", health);
 
-// Frontend build path
-const __dirname1 = path.resolve();
-
-// Serve React build files
-app.use(express.static(path.join(__dirname1, "../frontend/build")));
-
-// React routing fix
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname1, "../frontend/build/index.html"));
-});
-
 // Error Middleware (always last)
 app.use(errorMiddleware);
 
