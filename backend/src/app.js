@@ -8,44 +8,44 @@ const path = require("path");
 const cors = require("cors");
 require("dotenv").config({ path: "./config/config.env" });
 
-// routes
+// Routes
 const user = require("./route/userRoute");
 const order = require("./route/orderRoute");
 const product = require("./route/productRoute");
 const payment = require("./route/paymentRoute");
 const health = require("./route/healthRoute");
 
-// request logger
+// Request Logger
 if (process.env.NODE_ENV === "development" || process.env.LOG_REQUESTS === "true") {
   app.use(requestLogger);
 }
 
-// middlewares
+// Middlewares
 app.use(cookieParser());
 app.use(express.json());
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(fileUpload());
 app.use(cors());
 
-// API routes
+// API Routes
 app.use("/api/v1", product);
 app.use("/api/v1", user);
 app.use("/api/v1", order);
 app.use("/api/v1", payment);
 app.use("/api/v1", health);
 
-// error middleware
-app.use(errorMiddleware);
-
-// frontend path
+// Frontend build path
 const __dirname1 = path.resolve();
 
-// serve frontend build
-app.use(express.static(path.join(__dirname1, "frontend", "build")));
+// Serve React build files
+app.use(express.static(path.join(__dirname1, "../frontend/build")));
 
-// catch-all route for React
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname1, "frontend", "build", "index.html"));
+// React routing fix
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname1, "../frontend/build/index.html"));
 });
+
+// Error Middleware (always last)
+app.use(errorMiddleware);
 
 module.exports = app;
