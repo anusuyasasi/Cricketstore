@@ -8,6 +8,26 @@ const path = require("path");
 const cors = require("cors");
 require("dotenv").config({ path: "./config/config.env" });
 
+// Middlewares - CORS-ஐ மற்ற Routes-க்கு முன்பே போட வேண்டும்
+app.use(
+  cors({
+    origin: "http://localhost:3000", // உங்கள் லோக்கல் ஹோஸ்ட் போர்ட் 3000 என்றால் இது சரி
+    credentials: true,               // Cookies அனுப்ப இது மிக அவசியம்
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(fileUpload());
+
+// Request Logger
+if (process.env.NODE_ENV === "development" || process.env.LOG_REQUESTS === "true") {
+  app.use(requestLogger);
+}
+
 // Routes
 const user = require("./route/userRoute");
 const order = require("./route/orderRoute");
@@ -15,24 +35,6 @@ const product = require("./route/productRoute");
 const payment = require("./route/paymentRoute");
 const health = require("./route/healthRoute");
 
-// Request Logger
-if (process.env.NODE_ENV === "development" || process.env.LOG_REQUESTS === "true") {
-  app.use(requestLogger);
-}
-
-// Middlewares
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-app.use(fileUpload());
-app.use(
-  cors({
-    origin: "http://localhost:3000", // Unga React frontend URL
-    credentials: true,               // Cookies allow panna idhu mukkiyam
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
 // API Routes
 app.use("/api/v1", product);
 app.use("/api/v1", user);
