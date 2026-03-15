@@ -30,8 +30,6 @@ import {
   ALL_REVIEW_FAIL,
 } from "../constants/productsConstatns";
 
-const BASE_URL = "https://cricketstore.onrender.com";
-
 // get ALL Products
 export const getProduct = (
   keyword = "",
@@ -44,16 +42,11 @@ export const getProduct = (
     try {
       dispatch({ type: ALL_PRODUCT_REQUEST });
 
-      // FIXED: Inga "undefined" string-ah pogaama irukka indha logic help pannum
-      let searchKeyword = keyword && keyword !== "undefined" ? keyword : "";
-      
-      let link = `${BASE_URL}/api/v1/products?keyword=${searchKeyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}`;
+      let link = `https://cricketstore.onrender.com/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}`;
 
-      // Category "undefined" illama irundha mattum link-la serkanum
-      if (category && category !== "undefined" && category !== "") {
-        link += `&category=${category}`;
+      if (category) {
+        link = `https://cricketstore.onrender.com/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}&category=${category}`;
       }
-
       const { data } = await axios.get(link);
 
       dispatch({
@@ -75,11 +68,11 @@ export const getProductDetails = (id) => {
     try {
       dispatch({ type: PRODUCT_DETAILS_REQUEST });
 
-      const { data } = await axios.get(`${BASE_URL}/api/v1/product/${id}`);
+      const { data } = await axios.get(`https://cricketstore.onrender.com/api/v1/product/${id}`);
 
       dispatch({
         type: PRODUCT_DETAILS_SUCCESS,
-        payload: data.product || data.Product,
+        payload: data.Product,
       });
     } catch (error) {
       dispatch({
@@ -100,7 +93,7 @@ export const newReview = (reviewData) => async (dispatch) => {
       withCredentials: true,
     };
 
-    const { data } = await axios.put(`${BASE_URL}/api/v1/review`, reviewData, config);
+    const { data } = await axios.put(`https://cricketstore.onrender.com/api/v1/review/new`, reviewData, config);
 
     dispatch({ type: NEW_REVIEW_SUCCESS, payload: data.success });
   } catch (error) {
@@ -111,12 +104,12 @@ export const newReview = (reviewData) => async (dispatch) => {
   }
 };
 
-// Admin product request (Get All Products - Admin)
+// Admin product request
 export const getAdminProducts = () => async (dispatch) => {
   try {
     dispatch({ type: ADMIN_PRODUCT_REQUEST });
 
-    const { data } = await axios.get(`${BASE_URL}/api/v1/admin/products`, { withCredentials: true });
+    const { data } = await axios.get("https://cricketstore.onrender.com/api/v1/admin/products", { withCredentials: true });
     dispatch({ type: ADMIN_PRODUCT_SUCCESS, payload: data.products });
   } catch (error) {
     dispatch({
@@ -138,7 +131,7 @@ export function createProduct(productData) {
       };
 
       const { data } = await axios.post(
-        `${BASE_URL}/api/v1/admin/product/new`,
+        `https://cricketstore.onrender.com/api/v1/admin/product/new`,
         productData,
         config
       );
@@ -156,13 +149,13 @@ export function createProduct(productData) {
   };
 }
 
-// Delete Product
+// Delete Product request
 export function deleteProduct(id) {
   return async function (dispatch) {
     try {
       dispatch({ type: DELETE_PRODUCT_REQUEST });
 
-      const { data } = await axios.delete(`${BASE_URL}/api/v1/admin/product/${id}`, { withCredentials: true });
+      const { data } = await axios.delete(`https://cricketstore.onrender.com/api/v1/admin/product/${id}`, { withCredentials: true });
       dispatch({ type: DELETE_PRODUCT_SUCCESS, payload: data.success });
     } catch (error) {
       dispatch({
@@ -184,7 +177,7 @@ export const updateProduct = (id, productData) => async (dispatch) => {
     };
 
     const { data } = await axios.put(
-      `${BASE_URL}/api/v1/admin/product/${id}`,
+      `https://cricketstore.onrender.com/api/v1/admin/product/${id}`,
       productData,
       config
     );
@@ -201,12 +194,12 @@ export const updateProduct = (id, productData) => async (dispatch) => {
   }
 };
 
-// Get All Reviews (Admin)
+// FIXED: get all review of product admin (Spelling changed to getAllReviews)
 export const getAllReviews = (productId) => async (dispatch) => {
   try {
     dispatch({ type: ALL_REVIEW_REQUEST });
 
-    const { data } = await axios.get(`${BASE_URL}/api/v1/reviews?id=${productId}`, { withCredentials: true });
+    const { data } = await axios.get(`https://cricketstore.onrender.com/api/v1/reviews?id=${productId}`, { withCredentials: true });
     dispatch({ type: ALL_REVIEW_SUCCESS, payload: data.reviews });
   } catch (error) {
     dispatch({
@@ -216,13 +209,13 @@ export const getAllReviews = (productId) => async (dispatch) => {
   }
 };
 
-// Delete Review
+// delete product review
 export const deleteProductReview = (reviewId, productId) => async (dispatch) => {
   try {
     dispatch({ type: DELETE_REVIEW_REQUEST });
 
     const { data } = await axios.delete(
-      `${BASE_URL}/api/v1/reviews?id=${reviewId}&productId=${productId}`,
+      `https://cricketstore.onrender.com/api/v1/product/reviews/delete?id=${reviewId}&productId=${productId}`,
       { withCredentials: true }
     );
 
@@ -235,7 +228,7 @@ export const deleteProductReview = (reviewId, productId) => async (dispatch) => 
   }
 };
 
-// Clear Errors
+// clear error
 export const clearErrors = () => async (dispatch) => {
   dispatch({ type: CLEAR_ERRORS });
 };
