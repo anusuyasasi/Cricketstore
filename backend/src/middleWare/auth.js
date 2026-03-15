@@ -3,45 +3,44 @@ const userModel = require("../model/userModel");
 const jwt = require("jsonwebtoken");
 const ErrorHandler = require("../utils/errorHandler");
 
-exports.isAuthentictedUser = asyncWrapper(async (req, res, next) => {
-    // 1. Cookies-ல் இருந்து டோக்கனை எடுக்கிறோம்
+// 1. பயனர் லாகின் செய்திருக்கிறாரா என்று சரிபார்க்கும் Middleware
+exports.isAuthenticatedUser = asyncWrapper(async (req, res, next) => {
+    // குக்கீஸில் இருந்து டோக்கனை எடுக்கிறோம்
     const { token } = req.cookies;
 
-    // டோக்கன் இல்லை என்றால் 401 எரர்
+    // டோக்கன் இல்லை என்றால் பயனர் லாகின் செய்யவில்லை என்று அர்த்தம்
     if (!token) {
         return next(new ErrorHandler("Please Login to access this resource", 401));
     }
 
     try {
-        // 2. டோக்கனை செக்ரெட் கீ கொண்டு வெரிஃபை செய்கிறோம்
-        const deCodeToken = jwt.verify(token, process.env.JWT_SECRET);
+        // டோக்கனை ரகசிய குறியீடு (JWT_SECRET) கொண்டு சரிபார்க்கிறோம்
+        const decodedData = jwt.verify(token, process.env.JWT_SECRET);
 
-        // 3. யூசர் ஐடியை வைத்து டேட்டாபேஸில் தேடுகிறோம்
-        // ஒருவேளை யூசர் டெலீட் செய்யப்பட்டிருந்தால் எரர் வரும், அதைத் தடுக்க இது உதவும்
-        const user = await userModel.findById(deCodeToken.id);
+        // டோக்கனில் உள்ள ID-யைக் கொண்டு டேட்டாபேஸில் பயனரைத் தேடுகிறோம்
+        req.user = await userModel.findById(decodedData.id);
 
-        if (!user) {
-            return next(new ErrorHandler("User not found with this ID", 401));
+        // ஒருவேளை பயனர் டேட்டாபேஸில் இல்லை என்றால்
+        if (!req.user) {
+            return next(new ErrorHandler("User not found", 401));
         }
-
-        // 4. ரிக்வெஸ்ட்டில் யூசர் டேட்டாவைச் சேர்க்கிறோம்
-        req.user = user;
 
         next();
     } catch (error) {
-        // டோக்கன் எக்ஸ்பயரி (Expired) அல்லது தவறான டோக்கன் என்றால்
-        return next(new ErrorHandler("Json Web Token is invalid or expired. Try again.", 401));
+        // டோக்கன் செல்லாததாகவோ அல்லது காலம் முடிந்ததாகவோ இருந்தால்
+        return next(new ErrorHandler("JSON Web Token is invalid. Try again.", 401));
     }
 });
 
-// Roles அனுமதி சரிபார்க்கும் செயல்பாடு
+// 2. குறிப்பிட்ட ரோல் (Admin/User) உள்ளவர்கள் மட்டுமே அணுக அனுமதிக்கும் Middleware
 exports.authorizeRoles = (...roles) => {
     return (req, res, next) => {
-        // ஒருவேளை லாகின் ஆகாமல் இந்த ரூட்டை அணுகினால் req.user இருக்காது
+        // req.user இருக்கிறதா என்று உறுதி செய்கிறோம்
         if (!req.user) {
-            return next(new ErrorHandler("Please login to access this resource", 401));
+            return next(new ErrorHandler("User information not found. Please login again.", 401));
         }
 
+        // அனுமதிக்கப்பட்ட ரோல்களில் பயனரின் ரோல் இல்லையென்றால் 403 (Forbidden) எரர்
         if (!roles.includes(req.user.role)) {
             return next(
                 new ErrorHandler(
