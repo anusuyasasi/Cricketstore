@@ -14,7 +14,7 @@ export default defineConfig({
     // Using 127.0.0.1 instead of localhost for Node.js 17+ compatibility
     proxy: {
       '/api': {
-        target: 'https://ecommercewebsite-cmp1.onrender.com',
+        target: 'https://cricketstore.onrender.com',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path, // Keeps the /api prefix for your backend routes
