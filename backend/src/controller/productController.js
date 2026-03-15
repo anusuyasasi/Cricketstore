@@ -19,7 +19,6 @@ exports.createProduct = asyncWrapper(async (req, res) => {
     const chunkSize = 3;
     const imageChunks = [];
     
-    // Copy images array to avoid mutating the original
     const tempImages = [...images];
     while (tempImages.length > 0) {
       imageChunks.push(tempImages.splice(0, chunkSize));
@@ -56,22 +55,23 @@ exports.getAllProducts = asyncWrapper(async (req, res) => {
   const resultPerPage = 8;
   const productsCount = await ProductModel.countDocuments();
 
-  // Create ApiFeatures instance
+  // 1. Search mattrum Filter apply seiyavum
   const apiFeature = new ApiFeatures(ProductModel.find(), req.query)
     .search()
     .filter();
 
-  // Get products before pagination to find the correct filtered count
-  let products = await apiFeature.query;
+  // 2. Pagination apply seiyum munnadi filtered count edukka clone() seiyavum
+  // Idhu thaan unga frontend-la products show aagaamal irundha mukhya prachanaiyai solve pannum
+  let products = await apiFeature.query.clone(); 
   let filteredProductCount = products.length;
 
-  // Apply Pagination
+  // 3. Ippo Pagination apply seiyavum
   apiFeature.Pagination(resultPerPage);
 
-  // Execute the final query using clone()
-  products = await apiFeature.query.clone();
+  // 4. Final results fetch seiyavum
+  products = await apiFeature.query;
 
-  res.status(200).json({ // Changed 201 to 200 (standard for GET)
+  res.status(200).json({ 
     success: true,
     products,
     productsCount,
@@ -98,7 +98,6 @@ exports.updateProduct = asyncWrapper(async (req, res, next) => {
     return next(new ErrorHandler("Product not found", 404));
   }
 
-  // Handle Images
   if (req.body.images !== undefined) {
     let images = [];
     if (typeof req.body.images === "string") {
@@ -107,7 +106,7 @@ exports.updateProduct = asyncWrapper(async (req, res, next) => {
       images = req.body.images;
     }
 
-    // Deleting existing images from Cloudinary
+    // Deleting existing images
     for (let i = 0; i < product.images.length; i++) {
       await cloudinary.v2.uploader.destroy(product.images[i].product_id);
     }
@@ -146,7 +145,6 @@ exports.deleteProduct = asyncWrapper(async (req, res, next) => {
     return next(new ErrorHandler("Product not found", 404));
   }
 
-  // Deleting Images From Cloudinary
   for (let i = 0; i < product.images.length; i++) {
     await cloudinary.v2.uploader.destroy(product.images[i].product_id);
   }
@@ -173,7 +171,7 @@ exports.getProductDetails = asyncWrapper(async (req, res, next) => {
   });
 });
 
-// >>>>>>>>>>>>> Create New Review or Update the review >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>>>>>>>>>>>> Create/Update Review >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 exports.createProductReview = asyncWrapper(async (req, res, next) => {
   const { ratings, comment, productId, title, recommend } = req.body;
 
@@ -207,7 +205,6 @@ exports.createProductReview = asyncWrapper(async (req, res, next) => {
     product.numOfReviews = product.reviews.length;
   }
 
-  // Average Rating Calculation
   let avg = 0;
   product.reviews.forEach((rev) => {
     avg += rev.ratings;
@@ -222,7 +219,7 @@ exports.createProductReview = asyncWrapper(async (req, res, next) => {
   });
 });
 
-// >>>>>>>>>>>>>>>>>>>>>> Get All Reviews of a product >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>>>>>>>>>>>>>>>>>>>>> Get All Reviews >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 exports.getProductReviews = asyncWrapper(async (req, res, next) => {
   const product = await ProductModel.findById(req.query.id);
 
@@ -236,7 +233,7 @@ exports.getProductReviews = asyncWrapper(async (req, res, next) => {
   });
 });
 
-// >>>>>>>>>>>>>>>>>>>>>> delete review >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>>>>>>>>>>>>>>>>>>>>> Delete Review >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 exports.deleteReview = asyncWrapper(async (req, res, next) => {
   const product = await ProductModel.findById(req.query.productId);
 

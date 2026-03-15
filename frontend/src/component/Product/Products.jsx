@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"; // Added useState explicitly
+import React, { useEffect, useState } from "react";
 import "./Products.css";
 import { useDispatch, useSelector } from "react-redux";
 import Loader from "../layouts/loader/Loader";
@@ -35,36 +35,27 @@ const categories = [
 
 function Products() {
   const match = useRouteMatch();
-  // FIXED: If keyword is undefined, it will now send an empty string instead of "undefined"
-  const keyword = match.params.keyword || ""; 
-
   const dispatch = useDispatch();
   const alert = useAlert();
 
+  // State Management
+  const [currentPage, setCurrentPage] = useState(1);
+  const [price, setPrice] = useState([0, 100000]);
+  const [category, setCategory] = useState("");
+  const [ratings, setRatings] = useState(0);
+
+  // Redux Store Data
   const {
     products,
     loading,
     productsCount,
     error,
     resultPerPage,
-    filteredProductCount, // Un-commented this
+    filteredProductCount,
   } = useSelector((state) => state.products);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [price, setPrice] = useState([0, 100000]);
-  const [category, setCategory] = useState("");
-  const [ratings, setRatings] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedRating, setSelectedRating] = useState("all");
-
-  useEffect(() => {
-    if (error) {
-      alert.error(error);
-      dispatch(clearErrors());
-    }
-    // Fetch products whenever these values change
-    dispatch(getProduct(keyword, currentPage, price, category, ratings));
-  }, [dispatch, keyword, currentPage, price, category, ratings, alert, error]);
+  // FIXED: keyword logic
+  const keyword = match.params.keyword || "";
 
   const setCurrentPageNoHandler = (e) => {
     setCurrentPage(e);
@@ -72,27 +63,32 @@ function Products() {
 
   const priceHandler = (event, newPrice) => {
     setPrice(newPrice);
+    setCurrentPage(1); // Filter maathuna page 1-ku poganum
   };
 
   const handleCategoryChange = (cat) => {
-    // If the same category is clicked again, clear the filter (Toggle effect)
     if (category === cat) {
       setCategory("");
-      setSelectedCategory("");
     } else {
       setCategory(cat);
-      setSelectedCategory(cat);
     }
-    setCurrentPage(1); // Reset to page 1 on filter change
+    setCurrentPage(1);
   };
 
   const handleRatingChange = (event) => {
     setRatings(Number(event.target.value));
-    setSelectedRating(event.target.value);
-    setCurrentPage(1); // Reset to page 1 on filter change
+    setCurrentPage(1);
   };
 
-  // Count to decide whether to show pagination
+  useEffect(() => {
+    if (error) {
+      alert.error(error);
+      dispatch(clearErrors());
+    }
+    dispatch(getProduct(keyword, currentPage, price, category, ratings));
+  }, [dispatch, keyword, currentPage, price, category, ratings, alert, error]);
+
+  // Logic to decide pagination visibility
   let count = filteredProductCount;
 
   return (
@@ -166,7 +162,7 @@ function Products() {
                             id={`category-${index}`}
                             className="category-checkbox"
                             value={cat}
-                            checked={cat === selectedCategory}
+                            checked={cat === category}
                             onChange={() => handleCategoryChange(cat)}
                           />
                           {cat}
@@ -183,7 +179,7 @@ function Products() {
                   <Typography style={{ fontSize: "18px", padding: "10px", fontWeight: 700, color: "#414141" }}>
                     Ratings Above
                   </Typography>
-                  <RadioGroup value={selectedRating} onChange={handleRatingChange} className="ratingsBox">
+                  <RadioGroup value={String(ratings)} onChange={handleRatingChange} className="ratingsBox">
                     <FormControlLabel value="4" control={<Radio />} label="4★ & above" />
                     <FormControlLabel value="3" control={<Radio />} label="3★ & above" />
                     <FormControlLabel value="2" control={<Radio />} label="2★ & above" />

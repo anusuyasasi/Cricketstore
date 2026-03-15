@@ -5,14 +5,16 @@ class ApiFeatures {
   }
 
   search() {
-    const keyword = this.queryString.keyword
-      ? {
-          name: {
-            $regex: this.queryString.keyword,
-            $options: "i",
-          },
-        }
-      : {};
+    // FIXED: Keyword "undefined" string-ah vandhaalum adhai empty-ah treat pannum
+    const keyword =
+      this.queryString.keyword && this.queryString.keyword !== "undefined"
+        ? {
+            name: {
+              $regex: this.queryString.keyword,
+              $options: "i",
+            },
+          }
+        : {};
 
     this.query = this.query.find({ ...keyword });
     return this;
@@ -20,7 +22,7 @@ class ApiFeatures {
 
   filter() {
     const queryCopy = { ...this.queryString };
-    
+
     // Removing some fields for category
     const removeFields = ["keyword", "page", "limit"];
     removeFields.forEach((key) => delete queryCopy[key]);
@@ -31,8 +33,8 @@ class ApiFeatures {
 
     const parsedQuery = JSON.parse(queryStr);
 
-    // Frontend-la irundhu category empty-ah vandha adhai remove pannanum
-    if (parsedQuery.category === "") {
+    // FIXED: Category empty string-ah irundhaalum, illai "undefined" nu vandhaalum remove pannanum
+    if (parsedQuery.category === "" || parsedQuery.category === "undefined") {
       delete parsedQuery.category;
     }
 
@@ -42,6 +44,8 @@ class ApiFeatures {
 
   Pagination(resultPerPage) {
     const currentPage = Number(this.queryString.page) || 1;
+
+    // skip = resultPerPage * (page - 1)
     const skip = resultPerPage * (currentPage - 1);
 
     this.query = this.query.limit(resultPerPage).skip(skip);

@@ -30,7 +30,6 @@ import {
   ALL_REVIEW_FAIL,
 } from "../constants/productsConstatns";
 
-// Base URL variable (Idhu maintain panna easy-ah irukum)
 const BASE_URL = "https://cricketstore.onrender.com";
 
 // get ALL Products
@@ -45,11 +44,14 @@ export const getProduct = (
     try {
       dispatch({ type: ALL_PRODUCT_REQUEST });
 
-      // Endpoints corrected to plural 'products'
-      let link = `${BASE_URL}/api/v1/products?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}`;
+      // FIXED: Inga "undefined" string-ah pogaama irukka indha logic help pannum
+      let searchKeyword = keyword && keyword !== "undefined" ? keyword : "";
+      
+      let link = `${BASE_URL}/api/v1/products?keyword=${searchKeyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}`;
 
-      if (category) {
-        link = `${BASE_URL}/api/v1/products?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}&category=${category}`;
+      // Category "undefined" illama irundha mattum link-la serkanum
+      if (category && category !== "undefined" && category !== "") {
+        link += `&category=${category}`;
       }
 
       const { data } = await axios.get(link);
@@ -73,12 +75,11 @@ export const getProductDetails = (id) => {
     try {
       dispatch({ type: PRODUCT_DETAILS_REQUEST });
 
-      // Corrected to singular 'product' as per standard details route
       const { data } = await axios.get(`${BASE_URL}/api/v1/product/${id}`);
 
       dispatch({
         type: PRODUCT_DETAILS_SUCCESS,
-        payload: data.product || data.Product, // Handling both naming conventions
+        payload: data.product || data.Product,
       });
     } catch (error) {
       dispatch({
@@ -110,7 +111,7 @@ export const newReview = (reviewData) => async (dispatch) => {
   }
 };
 
-// Admin product request
+// Admin product request (Get All Products - Admin)
 export const getAdminProducts = () => async (dispatch) => {
   try {
     dispatch({ type: ADMIN_PRODUCT_REQUEST });
@@ -132,7 +133,7 @@ export function createProduct(productData) {
       dispatch({ type: NEW_PRODUCT_REQUEST });
 
       const config = {
-        headers: { "Content-Type": "multipart/form-data" }, // Multi-part is correct for images
+        headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       };
 
@@ -155,7 +156,7 @@ export function createProduct(productData) {
   };
 }
 
-// Delete Product request
+// Delete Product
 export function deleteProduct(id) {
   return async function (dispatch) {
     try {
@@ -200,7 +201,7 @@ export const updateProduct = (id, productData) => async (dispatch) => {
   }
 };
 
-// get all reviews of a product
+// Get All Reviews (Admin)
 export const getAllReviews = (productId) => async (dispatch) => {
   try {
     dispatch({ type: ALL_REVIEW_REQUEST });
@@ -215,7 +216,7 @@ export const getAllReviews = (productId) => async (dispatch) => {
   }
 };
 
-// delete product review
+// Delete Review
 export const deleteProductReview = (reviewId, productId) => async (dispatch) => {
   try {
     dispatch({ type: DELETE_REVIEW_REQUEST });
@@ -234,7 +235,7 @@ export const deleteProductReview = (reviewId, productId) => async (dispatch) => 
   }
 };
 
-// clear errors
+// Clear Errors
 export const clearErrors = () => async (dispatch) => {
   dispatch({ type: CLEAR_ERRORS });
 };
