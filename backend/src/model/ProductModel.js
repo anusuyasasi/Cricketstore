@@ -1,24 +1,24 @@
-const mongoose  = require("mongoose");
+const mongoose = require("mongoose");
+
 const productSchema = mongoose.Schema({
   name: {
     type: String,
-    required: [true, "Please Enter prodcut name"],
+    required: [true, "Please Enter product name"],
     trim: true,
   },
   description: {
     type: String,
-    required: [true, "Please Enter prodcut description"],
+    required: [true, "Please Enter product description"],
   },
   price: {
     type: Number,
     required: [true, "Please Enter product Price"],
-    maxLength: [8, "Price cannot exceed 9 characters"],
+    maxLength: [8, "Price cannot exceed 8 characters"], 
   },
   info: {
     type: String,
     required: [true, "Please Enter product info"],
   },
-
   ratings: {
     type: Number,
     default: 0,
@@ -37,11 +37,11 @@ const productSchema = mongoose.Schema({
   ],
   category: {
     type: String,
-    required: [true, "Please eneter Product Category"],
+    required: [true, "Please enter Product Category"],
   },
   Stock: {
     type: Number,
-    required: [true, "please Enter product stock"],
+    required: [true, "Please Enter product stock"],
     maxLength: [4, "Stock cannot exceed 4 characters"],
     default: 1,
   },
@@ -53,7 +53,7 @@ const productSchema = mongoose.Schema({
     {
       userId: {
         type: mongoose.Schema.ObjectId,
-        ref: "userModel",
+        ref: "User", // standard-ah "User" nu mathunga (unga User model name poruthu)
         required: true,
       },
       name: {
@@ -86,10 +86,9 @@ const productSchema = mongoose.Schema({
       },
     },
   ],
-  // when two admins are there. tab ye pta chalgea kiss admin ne product add kiya hai
   user: {
-    type: mongoose.Schema.ObjectId, //  this is for admin who will add the prduct to the db
-    ref: "userModel",
+    type: mongoose.Schema.ObjectId,
+    ref: "User", // admin-ai track panna
     required: true,
   },
   createdAt: {
@@ -98,5 +97,5 @@ const productSchema = mongoose.Schema({
   },
 });
 
-const ProductModel  = mongoose.model("ProductModel" , productSchema);
-module.exports =ProductModel
+// Convention-padi model name "Product" nu irukkarathu nallathu
+module.exports = mongoose.model("Product", productSchema);
