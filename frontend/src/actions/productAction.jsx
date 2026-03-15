@@ -21,200 +21,211 @@ import {
   UPDATE_PRODUCT_REQUEST,
   UPDATE_PRODUCT_SUCCESS,
   UPDATE_PRODUCT_FAIL,
-  ALL_REVIEW_REQUEST,
-  ALL_REVIEW_SUCCESS,
-  DELETE_REVIEW_REQUEST,
-  DELETE_REVIEW_SUCCESS,
-  DELETE_REVIEW_FAIL,
+ ALL_REVIEW_REQUEST,
+ ALL_REVIEW_SUCCESS,
+ DELETE_REVIEW_REQUEST,
+ DELETE_REVIEW_SUCCESS,
+ DELETE_REVIEW_FAIL,
   CLEAR_ERRORS,
   ALL_REVIEW_FAIL,
 } from "../constants/productsConstatns";
 
-// Base URL
-const BASE_URL = "https://cricketstore.onrender.com/api/v1";
-
-// Get ALL Products (User View)
+// get ALL Products
 export const getProduct = (
   keyword = "",
   currentPage = 1,
   price = [0, 100000],
   category,
   ratings = 0
-) => async (dispatch) => {
-  try {
-    dispatch({ type: ALL_PRODUCT_REQUEST });
+) => {
+  return async (dispatch) => {
+    try {
+      // initial state :
+      dispatch({
+        type: ALL_PRODUCT_REQUEST,
+      });
 
-    // URL Construction
-    let link = `${BASE_URL}/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}`;
+      let link = `https://cricketstore.onrender.com/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}`;
 
-    if (category) {
-      link = `${link}&category=${category}`;
+      // when category selected by user then using another link
+      if (category) {
+        link = `https://cricketstore.onrender.com/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}&category=${category}`;
+      }
+      const { data } = await axios.get(link);
+
+      dispatch({
+        type: ALL_PRODUCT_SUCCESS,
+        payload: data,
+      });
+    } catch (error) {
+      dispatch({
+        type: ALL_PRODUCT_FAIL,
+        payload: error.message,
+      });
     }
-
-    const { data } = await axios.get(link);
-
-    dispatch({
-      type: ALL_PRODUCT_SUCCESS,
-      payload: data, // இங்கே products, productsCount, filteredProductCount அனைத்தும் செல்லும்
-    });
-  } catch (error) {
-    dispatch({
-      type: ALL_PRODUCT_FAIL,
-      payload: error.response ? error.response.data.message : error.message,
-    });
-  }
+  };
 };
 
-// Get Product Details
-export const getProductDetails = (id) => async (dispatch) => {
-  try {
-    dispatch({ type: PRODUCT_DETAILS_REQUEST });
+// Get Products Details
+export const getProductDetails = (id) => {
+  return async (dispatch) => {
+    try {
+      dispatch({
+        type: PRODUCT_DETAILS_REQUEST,
+      });
 
-    const { data } = await axios.get(`${BASE_URL}/product/${id}`);
+      const { data } = await axios.get(`https://cricketstore.onrender.com/api/v1/product/${id}`);
 
-    dispatch({
-      type: PRODUCT_DETAILS_SUCCESS,
-      payload: data.product, // Backend-ல் 'product' என மாற்றியதால் இங்கேயும் சிறிய 'p'
-    });
-  } catch (error) {
-    dispatch({
-      type: PRODUCT_DETAILS_FAIL,
-      payload: error.response ? error.response.data.message : error.message,
-    });
-  }
+      dispatch({
+        type: PRODUCT_DETAILS_SUCCESS,
+        payload: data.Product,
+      });
+    } catch (error) {
+      dispatch({
+        type: PRODUCT_DETAILS_FAIL,
+        payload: error.message,
+      });
+    }
+  };
 };
 
-// Add new Review
+//Add new Review
 export const newReview = (reviewData) => async (dispatch) => {
   try {
     dispatch({ type: NEW_REVIEW_REQUEST });
 
-    const config = {
-      headers: { "Content-Type": "application/json" },
-      withCredentials: true,
-    };
+   const config = { 
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true // இங்கே சேர்க்கவும்
+};
 
-    const { data } = await axios.put(`${BASE_URL}/review/new`, reviewData, config);
+    const { data } = await axios.put(`https://cricketstore.onrender.com/api/v1/review/new`, reviewData, config);
 
     dispatch({ type: NEW_REVIEW_SUCCESS, payload: data.success });
   } catch (error) {
-    dispatch({ 
-        type: NEW_REVIEW_FAIL, 
-        payload: error.response ? error.response.data.message : error.message 
-    });
+    dispatch({ type: NEW_REVIEW_FAIL, payload: error.message });
   }
 };
 
-// Admin: Get All Products
+// admin product request :
 export const getAdminProducts = () => async (dispatch) => {
   try {
     dispatch({ type: ADMIN_PRODUCT_REQUEST });
 
-    const { data } = await axios.get(`${BASE_URL}/admin/products`, { withCredentials: true });
-
+const { data } = await axios.get("https://cricketstore.onrender.com/api/v1/admin/products", { withCredentials: true });
     dispatch({ type: ADMIN_PRODUCT_SUCCESS, payload: data.products });
   } catch (error) {
-    dispatch({ 
-        type: ADMIN_PRODUCT_FAIL, 
-        payload: error.response ? error.response.data.message : error.message 
-    });
+    dispatch({ type: ADMIN_PRODUCT_FAIL, payload: error.message });
   }
 };
 
-// Admin: Create Product
-export const createProduct = (productData) => async (dispatch) => {
-  try {
-    dispatch({ type: NEW_PRODUCT_REQUEST });
-
-    const config = {
-      headers: { "Content-Type": "multipart/form-data" },
-      withCredentials: true,
-    };
-
-    const { data } = await axios.post(`${BASE_URL}/admin/product/new`, productData, config);
-
-    dispatch({ type: NEW_PRODUCT_SUCCESS, payload: data });
-  } catch (error) {
-    dispatch({ 
-        type: NEW_PRODUCT_FAIL, 
-        payload: error.response ? error.response.data.message : error.message 
-    });
-  }
+// Create Product
+export function createProduct(productData) {
+  return async function(dispatch) {
+    try {
+      dispatch({
+        type: NEW_PRODUCT_REQUEST,
+      });
+         
+     const config = {
+  headers: { "Content-Type": "multipart/form-data" },
+  withCredentials: true // இங்கே சேர்க்கவும்
 };
 
-// Admin: Delete Product
-export const deleteProduct = (id) => async (dispatch) => {
-  try {
-    dispatch({ type: DELETE_PRODUCT_REQUEST });
+      const { data } = await axios.post(
+        `https://cricketstore.onrender.com/api/v1/admin/product/new`,
+        productData,
+        config
+      );
 
-    const { data } = await axios.delete(`${BASE_URL}/admin/product/${id}`, { withCredentials: true });
+      dispatch({
+        type: NEW_PRODUCT_SUCCESS,
+        payload: data,
+      });
+    } catch (error) {
+      dispatch({
+        type: NEW_PRODUCT_FAIL,
+        payload: error.message,
+      });
+    }
+  };
+}
 
-    dispatch({ type: DELETE_PRODUCT_SUCCESS, payload: data.success });
-  } catch (error) {
-    dispatch({ 
-        type: DELETE_PRODUCT_FAIL, 
-        payload: error.response ? error.response.data.message : error.message 
-    });
-  }
-};
+// Delete Product request
 
-// Admin: Update Product
+export function deleteProduct(id) {
+  return async function(dispatch) {
+    try {
+      dispatch({ type: DELETE_PRODUCT_REQUEST });
+
+const { data } = await axios.delete(`https://cricketstore.onrender.com/api/v1/admin/product/${id}`, { withCredentials: true });    
+      dispatch({ type: DELETE_PRODUCT_SUCCESS, payload: data.success });
+    } catch (error) {
+      dispatch({ type: DELETE_PRODUCT_FAIL, payload: error.message });
+    }
+  };
+}
+
+// updateProduct;
 export const updateProduct = (id, productData) => async (dispatch) => {
-  try {
-    dispatch({ type: UPDATE_PRODUCT_REQUEST });
+         try {
+           dispatch({ type: UPDATE_PRODUCT_REQUEST });
 
-    const config = {
-      headers: { "Content-Type": "multipart/form-data" },
-      withCredentials: true,
-    };
-
-    const { data } = await axios.put(`${BASE_URL}/admin/product/${id}`, productData, config);
-
-    dispatch({ type: UPDATE_PRODUCT_SUCCESS, payload: data.success });
-  } catch (error) {
-    dispatch({ 
-        type: UPDATE_PRODUCT_FAIL, 
-        payload: error.response ? error.response.data.message : error.message 
-    });
-  }
+          const config = {
+  headers: { "Content-Type": "multipart/form-data" },
+  withCredentials: true // இங்கே சேர்க்கவும்
 };
 
-// Admin: Get all reviews
-export const getAllreviews = (productId) => async (dispatch) => {
-  try {
-    dispatch({ type: ALL_REVIEW_REQUEST });
+           const { data } = await axios.put(
+             `https://cricketstore.onrender.com/api/v1/admin/product/${id}`,
+             productData,
+             config
+           );
 
-    const { data } = await axios.get(`${BASE_URL}/reviews?id=${productId}`, { withCredentials: true });
+           dispatch({
+             type: UPDATE_PRODUCT_SUCCESS,
+             payload: data.success,
+           });
+         } catch (error) {
+           dispatch({
+             type: UPDATE_PRODUCT_FAIL,
+             payload: error.message,
+           });
+         }
+       };
 
-    dispatch({ type: ALL_REVIEW_SUCCESS, payload: data.reviews });
-  } catch (error) {
-    dispatch({ 
-        type: ALL_REVIEW_FAIL, 
-        payload: error.response ? error.response.data.message : error.message 
-    });
-  }
-};
+ // get all review of product admin ==>
+ export const getAllreviews  = (productId) => async (dispatch) =>{
 
-// Admin: Delete review
-export const deleteProductReview = (reviewId, productId) => async (dispatch) => {
-  try {
-    dispatch({ type: DELETE_REVIEW_REQUEST });
+     try {
+        dispatch({type : ALL_REVIEW_REQUEST})
 
-    const { data } = await axios.delete(
-      `${BASE_URL}/product/reviews/delete?id=${reviewId}&productId=${productId}`,
-      { withCredentials: true }
-    );
+const { data } = await axios.get(`https://cricketstore.onrender.com/api/v1/reviews?id=${productId}`, { withCredentials: true });        dispatch({type : ALL_REVIEW_SUCCESS , payload : data.reviews})
+     } catch (error) {
+        dispatch({type : ALL_REVIEW_FAIL , payload : error.message})
+     }
+ }
 
-    dispatch({ type: DELETE_REVIEW_SUCCESS, payload: data.success });
-  } catch (error) {
-    dispatch({ 
-        type: DELETE_REVIEW_FAIL, 
-        payload: error.response ? error.response.data.message : error.message 
-    });
-  }
-};
 
-// Clear Errors
+ // delete product review
+export const deleteProductReview = (reviewId , productId) => async (dispatch) =>{
+   try {
+  dispatch({type : DELETE_REVIEW_REQUEST})
+
+   const { data } = await axios.delete(
+  `https://cricketstore.onrender.com/api/v1/product/reviews/delete?id=${reviewId}&productId=${productId}`,
+  { withCredentials: true }
+);
+
+     dispatch({ type: DELETE_REVIEW_SUCCESS, payload: data.success });
+   } catch (error) {
+      dispatch({type : DELETE_REVIEW_FAIL , payload : error.message})
+   }
+
+}
+
+
+// clear error
 export const clearErrors = () => async (dispatch) => {
   dispatch({ type: CLEAR_ERRORS });
 };
