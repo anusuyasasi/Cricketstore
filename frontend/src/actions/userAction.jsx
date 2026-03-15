@@ -1,4 +1,6 @@
 import axios from "axios";
+// இந்த ஒரு வரியைச் சேர்த்தால் போதும்:
+axios.defaults.withCredentials = true;
 import {
   LOGIN_REQUEST,
   LOGIN_FAIL,
@@ -47,10 +49,12 @@ export function login(email, password) {
     try {
       dispatch({ type: LOGIN_REQUEST });
 
-      const config = { headers: { "Content-Type": "application/json" } };
-
+const config = { 
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true // இங்கே சேர்க்கவும்
+};
       const { data } = await axios.post(
-        `/api/v1/login`,
+        `https://cricketstore.onrender.com/api/v1/login`,
         { email, password },
         config
       );
@@ -73,7 +77,7 @@ export function signUp(signupData) {
       };
 
       const { data } = await axios.post(
-        `/api/v1/register`,
+        `https://cricketstore.onrender.com/api/v1/register`,
         signupData,
         config
       );
@@ -105,8 +109,7 @@ export const load_UserProfile = () => async (dispatch) => {
        dispatch({ type: LOAD_USER_SUCCESS, payload: user });
     } else {
       // If user data is not available in session storage, make a backend API call
-      const { data } = await axios.get("api/v1/profile");
-   
+const { data } = await axios.get("https://cricketstore.onrender.com/api/v1/profile", { withCredentials: true });   
       dispatch({ type: LOAD_USER_SUCCESS, payload: data.user });
 
       // Save the user data to session storage for future use
@@ -123,8 +126,7 @@ export function logout() {
   return async function (dispatch) {
     try {
       sessionStorage.removeItem("user");
-      await axios.get(`/api/v1/logout`); // token will expired from cookies and no more user data access
-      dispatch({ type: LOGOUT_SUCCESS });
+await axios.get(`https://cricketstore.onrender.com/api/v1/logout`, { withCredentials: true });      dispatch({ type: LOGOUT_SUCCESS });
 
     } catch (error) {
       sessionStorage.removeItem("user");
@@ -142,12 +144,13 @@ export function updateProfile(userData) {
       dispatch({ type: UPDATE_PROFILE_REQUEST });
 
       const config = {
-        headers: { "Content-Type": "multipart/form-data" },
-      };
+  headers: { "Content-Type": "multipart/form-data" },
+  withCredentials: true // இங்கே சேர்க்கவும்
+};
 
 
       const { data } = await axios.put(
-        `/api/v1/profile/update`,
+        `https://cricketstore.onrender.com/api/v1/profile/update`,
         userData,
         config
       );
@@ -180,7 +183,7 @@ export function updatePassword(userPassWord) {
 
 
       const { data } = await axios.put(
-        `/api/v1/password/update`,
+        `https://cricketstore.onrender.com/api/v1/password/update`,
         userPassWord,
         config
       );
@@ -208,7 +211,7 @@ export function forgetPassword(email) {
       };
 
       const { data } = await axios.post(
-        `/api/v1/password/forgot`,
+        `https://cricketstore.onrender.com/api/v1/password/forgot`,
         email,
         config
       );
@@ -232,7 +235,7 @@ export const resetPassword = (token, passwords) => async (dispatch) => {
     const config = { headers: { "Content-Type": "application/json" } };
 
     const { data } = await axios.put(
-      `/api/v1/password/reset/${token}`,
+      `https://cricketstore.onrender.com/api/v1/password/reset/${token}`,
       passwords,
       config
     );
@@ -254,7 +257,7 @@ export const getAllUsers  = () =>async (dispatch) =>{
 
     dispatch({type : ALL_USERS_REQUEST})
 
-    const { data } = await axios.get("/api/v1/admin/users");
+    const { data } = await axios.get("https://cricketstore.onrender.com/api/v1/admin/users");
 
     dispatch({ type: ALL_USERS_SUCCESS, payload: data.users});
     
@@ -269,7 +272,7 @@ export const getAllUsers  = () =>async (dispatch) =>{
 export const getUserDetails = (id) => async (dispatch) => {
   try {
      dispatch({type : USER_DETAILS_REQUEST})
-         const { data } = await axios.get(`/api/v1/admin/user/${id}`);
+         const { data } = await axios.get(`https://cricketstore.onrender.com/api/v1/admin/user/${id}`);
             dispatch({ type: USER_DETAILS_SUCCESS, payload: data.user });
 
   } catch (error) {
@@ -284,12 +287,15 @@ export const updateUser = (id, userData) => async (dispatch) => {
      dispatch({type : UPDATE_USER_REQUEST})
 
 
-     const config  = {headers : {"Content-Type" : "application/json"}}
+const config = {
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true // இந்த வரியை இங்கே சேர்க்கவும்
+};
      const { data } = await axios.put(
-       `/api/v1/admin/user/${id}`,userData,
-       config
-       
-     );
+  `https://cricketstore.onrender.com/api/v1/admin/user/${id}`,
+  userData,
+  config
+);
      console.log(data);
     dispatch({ type: UPDATE_USER_SUCCESS, payload: data.success });
 
@@ -305,8 +311,10 @@ export const deleteUser  =(id) => async (dispatch) =>{
   try {
        dispatch({ type: DELETE_USER_REQUEST });
        
-       const { data } = await axios.delete(`/api/v1/admin/user/${id}`);
-        dispatch({type : DELETE_USER_SUCCESS , payload : data})
+const { data } = await axios.delete(
+  `https://cricketstore.onrender.com/api/v1/admin/user/${id}`, 
+  { withCredentials: true }
+);        dispatch({type : DELETE_USER_SUCCESS , payload : data})
 
   } catch (error) {
       dispatch({type : DELETE_USER_FAIL , payload : error.message})

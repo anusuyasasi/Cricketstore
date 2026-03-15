@@ -25,8 +25,14 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(fileUpload());
-app.use(cors());
-
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Unga React frontend URL
+    credentials: true,               // Cookies allow panna idhu mukkiyam
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 // API Routes
 app.use("/api/v1", product);
 app.use("/api/v1", user);

@@ -55,8 +55,9 @@ function App() {
 
   async function getStripeApiKey() {
     try {
-      const { data } = await axios.get("/api/v1/stripeapikey");
-      if (data.stripeApiKey) {
+const { data } = await axios.get("https://cricketstore.onrender.com/api/v1/stripeapikey", {
+      withCredentials: true
+    });      if (data.stripeApiKey) {
         // Correctly store raw string to avoid quote issues in loadStripe
         sessionStorage.setItem("stripeApiKey", data.stripeApiKey);
         setStripeApiKey(data.stripeApiKey);

@@ -45,11 +45,11 @@ export const getProduct = (
         type: ALL_PRODUCT_REQUEST,
       });
 
-      let link = `/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}`;
+      let link = `https://cricketstore.onrender.com/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}`;
 
       // when category selected by user then using another link
       if (category) {
-        link = `/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}&category=${category}`;
+        link = `https://cricketstore.onrender.com/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}&category=${category}`;
       }
       const { data } = await axios.get(link);
 
@@ -74,7 +74,7 @@ export const getProductDetails = (id) => {
         type: PRODUCT_DETAILS_REQUEST,
       });
 
-      const { data } = await axios.get(`/api/v1/product/${id}`);
+      const { data } = await axios.get(`https://cricketstore.onrender.com/api/v1/product/${id}`);
 
       dispatch({
         type: PRODUCT_DETAILS_SUCCESS,
@@ -94,9 +94,12 @@ export const newReview = (reviewData) => async (dispatch) => {
   try {
     dispatch({ type: NEW_REVIEW_REQUEST });
 
-    const config = { headers: { "Content-Type": "application/json" } };
+   const config = { 
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true // இங்கே சேர்க்கவும்
+};
 
-    const { data } = await axios.put(`/api/v1/review/new`, reviewData, config);
+    const { data } = await axios.put(`https://cricketstore.onrender.com/api/v1/review/new`, reviewData, config);
 
     dispatch({ type: NEW_REVIEW_SUCCESS, payload: data.success });
   } catch (error) {
@@ -109,8 +112,7 @@ export const getAdminProducts = () => async (dispatch) => {
   try {
     dispatch({ type: ADMIN_PRODUCT_REQUEST });
 
-    const { data } = await axios.get("/api/v1/admin/products");
-
+const { data } = await axios.get("https://cricketstore.onrender.com/api/v1/admin/products", { withCredentials: true });
     dispatch({ type: ADMIN_PRODUCT_SUCCESS, payload: data.products });
   } catch (error) {
     dispatch({ type: ADMIN_PRODUCT_FAIL, payload: error.message });
@@ -125,12 +127,13 @@ export function createProduct(productData) {
         type: NEW_PRODUCT_REQUEST,
       });
          
-      const config = {
-        headers: { "Content-Type": "multipart/form-data" },
-      };
+     const config = {
+  headers: { "Content-Type": "multipart/form-data" },
+  withCredentials: true // இங்கே சேர்க்கவும்
+};
 
       const { data } = await axios.post(
-        `/api/v1/admin/product/new`,
+        `https://cricketstore.onrender.com/api/v1/admin/product/new`,
         productData,
         config
       );
@@ -155,8 +158,7 @@ export function deleteProduct(id) {
     try {
       dispatch({ type: DELETE_PRODUCT_REQUEST });
 
-      const { data } = await axios.delete(`/api/v1/admin/product/${id}`);
-    
+const { data } = await axios.delete(`https://cricketstore.onrender.com/api/v1/admin/product/${id}`, { withCredentials: true });    
       dispatch({ type: DELETE_PRODUCT_SUCCESS, payload: data.success });
     } catch (error) {
       dispatch({ type: DELETE_PRODUCT_FAIL, payload: error.message });
@@ -169,12 +171,13 @@ export const updateProduct = (id, productData) => async (dispatch) => {
          try {
            dispatch({ type: UPDATE_PRODUCT_REQUEST });
 
-           const config = {
-              headers: { "Content-Type": "multipart/form-data" },
-           };
+          const config = {
+  headers: { "Content-Type": "multipart/form-data" },
+  withCredentials: true // இங்கே சேர்க்கவும்
+};
 
            const { data } = await axios.put(
-             `/api/v1/admin/product/${id}`,
+             `https://cricketstore.onrender.com/api/v1/admin/product/${id}`,
              productData,
              config
            );
@@ -197,8 +200,7 @@ export const updateProduct = (id, productData) => async (dispatch) => {
      try {
         dispatch({type : ALL_REVIEW_REQUEST})
 
-        const { data } = await axios.get(`/api/v1/reviews?id=${productId}`);
-        dispatch({type : ALL_REVIEW_SUCCESS , payload : data.reviews})
+const { data } = await axios.get(`https://cricketstore.onrender.com/api/v1/reviews?id=${productId}`, { withCredentials: true });        dispatch({type : ALL_REVIEW_SUCCESS , payload : data.reviews})
      } catch (error) {
         dispatch({type : ALL_REVIEW_FAIL , payload : error.message})
      }
@@ -210,9 +212,10 @@ export const deleteProductReview = (reviewId , productId) => async (dispatch) =>
    try {
   dispatch({type : DELETE_REVIEW_REQUEST})
 
-    const { data } = await axios.delete(
-      `/api/v1/product/reviews/delete?id=${reviewId}&productId=${productId}`
-    );
+   const { data } = await axios.delete(
+  `https://cricketstore.onrender.com/api/v1/product/reviews/delete?id=${reviewId}&productId=${productId}`,
+  { withCredentials: true }
+);
 
      dispatch({ type: DELETE_REVIEW_SUCCESS, payload: data.success });
    } catch (error) {

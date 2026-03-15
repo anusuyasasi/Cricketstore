@@ -31,6 +31,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "axios";
 import { load_UserProfile } from "../actions/userAction"
+axios.defaults.withCredentials = true;
 function Users() {
    const location = useLocation();
    const [isAdminRoute, setIsAdminRoute] = useState(false);
@@ -39,9 +40,12 @@ function Users() {
 
          // get STRIPE_API_KEY for payment from backend for cnnection to stripe payment gateWaY
   async function getStripeApiKey() {
-    const { data } = await axios.get("/api/v1/stripeapikey");
-    setStripeApiKey(data.stripeApiKey);
-  }
+   const { data } = await axios.get(
+    "https://cricketstore.onrender.com/api/v1/stripeapikey",
+    { withCredentials: true }
+  );
+  setStripeApiKey(data.stripeApiKey);
+}
 
   useEffect(
     () => {

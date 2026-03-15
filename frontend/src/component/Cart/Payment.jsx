@@ -234,8 +234,14 @@ const PaymentComponent = () => {
 
     try {
       const config = { headers: { "Content-Type": "application/json" } };
-      const { data } = await axios.post("/api/v1/payment/process", { amount: Math.round(subTotal * 100) }, config);
-      const client_secret = data.client_secret;
+const { data } = await axios.post(
+  "https://cricketstore.onrender.com/api/v1/payment/process", 
+  { amount: Math.round(subTotal * 100) }, 
+  { 
+    headers: { "Content-Type": "application/json" },
+    withCredentials: true // இந்த வரியை இங்கே சேர்க்கவும்
+  }
+);      const client_secret = data.client_secret;
 
       const result = await stripe.confirmCardPayment(client_secret, {
         payment_method: {

@@ -7,7 +7,9 @@ import axios from "axios";
 
 // Add to Cart
 export const addItemToCart = (id, quantity) => async (dispatch, getState) => {
-  const { data } = await axios.get(`/api/v1/product/${id}`);
+  const { data } = await axios.get(`https://cricketstore.onrender.com/api/v1/product/${id}`, {
+  withCredentials: true // இந்த வரியை இங்கே சேர்க்கவும்
+});
   dispatch({
     type: ADD_TO_CART,
     payload: {
