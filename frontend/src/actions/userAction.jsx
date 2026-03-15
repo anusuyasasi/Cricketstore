@@ -1,7 +1,6 @@
 import axios from "axios";
 
 // Global-ஆக எல்லா requests-க்கும் credentials enable செய்கிறோம்
-// Idhu backend cookies-ai auto-vaga anuppa udhavum
 axios.defaults.withCredentials = true;
 
 import {
@@ -43,7 +42,7 @@ import {
   DELETE_USER_SUCCESS,
 } from "../constants/userConstanat";
 
-// Base URL
+// Base URL (மாற்றுவது எளிது என்பதால் ஒரு மாறியில் வைப்பது நல்லது)
 const API_BASE_URL = "https://cricketstore.onrender.com/api/v1";
 
 // Login User
@@ -62,9 +61,6 @@ export function login(email, password) {
         { email, password },
         config
       );
-
-      // Login success aanal session storage-il update seiyavum
-      sessionStorage.setItem("user", JSON.stringify(data.user));
 
       dispatch({ type: LOGIN_SUCCESS, payload: data.user });
     } catch (error) {
@@ -93,8 +89,6 @@ export function signUp(signupData) {
         config
       );
 
-      sessionStorage.setItem("user", JSON.stringify(data.user));
-
       dispatch({ type: REGISTER_USER_SUCCESS, payload: data.user });
     } catch (error) {
       dispatch({ 
@@ -105,18 +99,24 @@ export function signUp(signupData) {
   };
 }
 
-// Load User Profile (Updated Logic)
+// Load User Profile
 export const load_UserProfile = () => async (dispatch) => {
   try {
     dispatch({ type: LOAD_USER_REQUEST });
 
-    // Localhost to Render communication-il session storage silar neram error tharum.
-    // Adhanaal eppodhum backend-il irundhu fresh data-vai edukka solluvom.
-    const { data } = await axios.get(`${API_BASE_URL}/profile`, { withCredentials: true });
+    // Session storage-ல் டேட்டா இருக்கிறதா என்று பார்ப்போம்
+    const userData = sessionStorage.getItem("user");
     
-    sessionStorage.setItem("user", JSON.stringify(data.user));
-    
-    dispatch({ type: LOAD_USER_SUCCESS, payload: data.user });
+    if (userData && userData !== "undefined") {
+      const user = JSON.parse(userData);
+      dispatch({ type: LOAD_USER_SUCCESS, payload: user });
+    } else {
+      // Backend call - withCredentials முக்கியம்
+      const { data } = await axios.get(`${API_BASE_URL}/profile`, { withCredentials: true });
+      
+      dispatch({ type: LOAD_USER_SUCCESS, payload: data.user });
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+    }
   } catch (error) {
     dispatch({ 
       type: LOAD_USER_FAIL, 
@@ -159,8 +159,9 @@ export function updateProfile(userData) {
         config
       );
 
-      // Profile update aanal user data-vai update seiya load_UserProfile call seiyalam
-      dispatch(load_UserProfile());
+      if (data.user) {
+        sessionStorage.setItem("user", JSON.stringify(data.user));
+      }
 
       dispatch({
         type: UPDATE_PROFILE_SUCCESS,
@@ -175,8 +176,6 @@ export function updateProfile(userData) {
   };
 }
 
-// ... (Update Password, Forgot Password, Reset Password logic-il matram illai, adhu sariyaaga ulladhu)
-
 // Update Password
 export function updatePassword(userPassWord) {
   return async function (dispatch) {
@@ -185,7 +184,7 @@ export function updatePassword(userPassWord) {
 
       const config = {
         headers: { "Content-Type": "application/json" },
-        withCredentials: true,
+        withCredentials: true, // பாதுகாப்பான மாற்றங்களுக்கு இது அவசியம்
       };
 
       const { data } = await axios.put(
@@ -207,72 +206,137 @@ export function updatePassword(userPassWord) {
   };
 }
 
-// Forgot/Reset and Admin actions remain the same as they follow the withCredentials rule properly.
-// ... (Adutha adutha admin actions-um sariyaaga ulladhu)
-
-export const forgetPassword = (email) => async (dispatch) => {
+// Forgot Password
+export function forgetPassword(email) {
+  return async function (dispatch) {
     try {
-        dispatch({ type: FORGOT_PASSWORD_REQUEST });
-        const config = { headers: { "Content-Type": "application/json" }, withCredentials: true };
-        const { data } = await axios.post(`${API_BASE_URL}/password/forgot`, email, config);
-        dispatch({ type: FORGOT_PASSWORD_SUCCESS, payload: data.message });
-    } catch (error) {
-        dispatch({ type: FORGOT_PASSWORD_FAIL, payload: error.response.data.message });
-    }
-};
+      dispatch({ type: FORGOT_PASSWORD_REQUEST });
 
+      const config = {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      };
+
+      const { data } = await axios.post(
+        `${API_BASE_URL}/password/forgot`,
+        email,
+        config
+      );
+
+      dispatch({
+        type: FORGOT_PASSWORD_SUCCESS,
+        payload: data.message,
+      });
+    } catch (error) {
+      dispatch({ 
+        type: FORGOT_PASSWORD_FAIL, 
+        payload: error.response ? error.response.data.message : error.message 
+      });
+    }
+  };
+}
+
+// Reset Password
 export const resetPassword = (token, passwords) => async (dispatch) => {
-    try {
-        dispatch({ type: RESET_PASSWORD_REQUEST });
-        const config = { headers: { "Content-Type": "application/json" }, withCredentials: true };
-        const { data } = await axios.put(`${API_BASE_URL}/password/reset/${token}`, passwords, config);
-        dispatch({ type: RESET_PASSWORD_SUCCESS, payload: data.success });
-    } catch (error) {
-        dispatch({ type: RESET_PASSWORD_FAIL, payload: error.response.data.message });
-    }
+  try {
+    dispatch({ type: RESET_PASSWORD_REQUEST });
+
+    const config = { 
+      headers: { "Content-Type": "application/json" },
+      withCredentials: true 
+    };
+
+    const { data } = await axios.put(
+      `${API_BASE_URL}/password/reset/${token}`,
+      passwords,
+      config
+    );
+
+    dispatch({ type: RESET_PASSWORD_SUCCESS, payload: data.success });
+  } catch (error) {
+    dispatch({
+      type: RESET_PASSWORD_FAIL,
+      payload: error.response ? error.response.data.message : error.message,
+    });
+  }
 };
 
+// Admin Actions -----------------------------------------------------------
+
+// Get All Users (Admin)
 export const getAllUsers = () => async (dispatch) => {
-    try {
-        dispatch({ type: ALL_USERS_REQUEST });
-        const { data } = await axios.get(`${API_BASE_URL}/admin/users`, { withCredentials: true });
-        dispatch({ type: ALL_USERS_SUCCESS, payload: data.users });
-    } catch (error) {
-        dispatch({ type: ALL_USERS_FAIL, payload: error.response.data.message });
-    }
+  try {
+    dispatch({ type: ALL_USERS_REQUEST });
+
+    const { data } = await axios.get(`${API_BASE_URL}/admin/users`, { withCredentials: true });
+
+    dispatch({ type: ALL_USERS_SUCCESS, payload: data.users });
+  } catch (error) {
+    dispatch({ 
+      type: ALL_USERS_FAIL, 
+      payload: error.response ? error.response.data.message : error.message 
+    });
+  }
 };
 
+// Get User Details (Admin)
 export const getUserDetails = (id) => async (dispatch) => {
-    try {
-        dispatch({ type: USER_DETAILS_REQUEST });
-        const { data } = await axios.get(`${API_BASE_URL}/admin/user/${id}`, { withCredentials: true });
-        dispatch({ type: USER_DETAILS_SUCCESS, payload: data.user });
-    } catch (error) {
-        dispatch({ type: USER_DETAILS_FAIL, payload: error.response.data.message });
-    }
+  try {
+    dispatch({ type: USER_DETAILS_REQUEST });
+    
+    const { data } = await axios.get(`${API_BASE_URL}/admin/user/${id}`, { withCredentials: true });
+    
+    dispatch({ type: USER_DETAILS_SUCCESS, payload: data.user });
+  } catch (error) {
+    dispatch({ 
+      type: USER_DETAILS_FAIL, 
+      payload: error.response ? error.response.data.message : error.message 
+    });
+  }
 };
 
+// Update User Role (Admin)
 export const updateUser = (id, userData) => async (dispatch) => {
-    try {
-        dispatch({ type: UPDATE_USER_REQUEST });
-        const config = { headers: { "Content-Type": "application/json" }, withCredentials: true };
-        const { data } = await axios.put(`${API_BASE_URL}/admin/user/${id}`, userData, config);
-        dispatch({ type: UPDATE_USER_SUCCESS, payload: data.success });
-    } catch (error) {
-        dispatch({ type: UPDATE_USER_FAIL, payload: error.response.data.message });
-    }
+  try {
+    dispatch({ type: UPDATE_USER_REQUEST });
+
+    const config = {
+      headers: { "Content-Type": "application/json" },
+      withCredentials: true,
+    };
+
+    const { data } = await axios.put(
+      `${API_BASE_URL}/admin/user/${id}`,
+      userData,
+      config
+    );
+
+    dispatch({ type: UPDATE_USER_SUCCESS, payload: data.success });
+  } catch (error) {
+    dispatch({ 
+      type: UPDATE_USER_FAIL, 
+      payload: error.response ? error.response.data.message : error.message 
+    });
+  }
 };
 
+// Delete User (Admin)
 export const deleteUser = (id) => async (dispatch) => {
-    try {
-        dispatch({ type: DELETE_USER_REQUEST });
-        const { data } = await axios.delete(`${API_BASE_URL}/admin/user/${id}`, { withCredentials: true });
-        dispatch({ type: DELETE_USER_SUCCESS, payload: data.success });
-    } catch (error) {
-        dispatch({ type: DELETE_USER_FAIL, payload: error.response.data.message });
-    }
+  try {
+    dispatch({ type: DELETE_USER_REQUEST });
+
+    const { data } = await axios.delete(`${API_BASE_URL}/admin/user/${id}`, { withCredentials: true });
+
+    dispatch({ type: DELETE_USER_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ 
+      type: DELETE_USER_FAIL, 
+      payload: error.response ? error.response.data.message : error.message 
+    });
+  }
 };
 
+// Clearing Errors
 export const clearErrors = () => async (dispatch) => {
   dispatch({ type: CLEAR_ERRORS });
 };

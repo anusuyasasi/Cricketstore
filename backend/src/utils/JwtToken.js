@@ -1,31 +1,25 @@
-// This method will take user Data, status code, and res 
-// It creates a JWT Token, saves it in a cookie, and sends the response.
+// this method will take user Data status code and res => Then Create Token and will saving in cookie and send
 
 const sendJWtToken = (user, statusCode, res) => {
-    // User model-ல் நாம் உருவாக்கிய getJWTToken() மெத்தட் மூலம் டோக்கனை உருவாக்குகிறோம்
-    const token = user.getJWTToken();
+  const token = user.getJWTToken(); // every user has access all userModel methods
 
-    // Cookie எக்ஸ்பயரி நேரத்தை .env கோப்பில் இருந்து எடுக்கிறோம் (இல்லை என்றால் 7 நாட்கள் என எடுத்துக்கொள்ளும்)
-    const cookieExpire = Number(process.env.COOKIE_EXPIRE) || 7;
+  // options for cookie
+  const options = {
+    expires: new Date(
+      Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+    // கீழே உள்ள இரண்டு வரிகள் மிக முக்கியம் (Render to Localhost connection-க்கு)
+    secure: true,   // HTTPS வழியாக மட்டுமே குக்கீ வேலை செய்யும்
+    sameSite: "none", // Cross-site request-க்கு இது கட்டாயம்
+  };
 
-    // Cookie-க்கான ஆப்ஷன்கள்
-    const options = {
-        expires: new Date(
-            Date.now() + cookieExpire * 24 * 60 * 60 * 1000
-        ),
-        httpOnly: true, // இது XSS அட்டாக்கிலிருந்து குக்கீயைப் பாதுகாக்கும்
-
-        // Render (Backend) மற்றும் Localhost (Frontend) என வெவ்வேறு இடங்களில் இருப்பதால் இவை கட்டாயம்:
-        secure: true,   // HTTPS-ல் மட்டுமே குக்கீ வேலை செய்யும் (Render HTTPS என்பதால் இது அவசியம்)
-        sameSite: "none", // Cross-site (Render to Localhost) ரிக்வெஸ்ட்டுகளுக்கு இது மிக முக்கியம்
-    };
-
-    // குக்கீயைச் சேமித்து JSON ரெஸ்பான்ஸை அனுப்புகிறோம்
-    res.status(statusCode).cookie("token", token, options).json({
-        success: true,
-        user,
-        token,
-    });
+  // wrapping all data into cookie eg token and options data
+  res.status(statusCode).cookie("token", token, options).json({
+    success: true,
+    user,
+    token,
+  });
 };
 
 module.exports = sendJWtToken;
