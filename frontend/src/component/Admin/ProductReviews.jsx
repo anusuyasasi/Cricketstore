@@ -4,7 +4,7 @@ import { DataGrid } from "@material-ui/data-grid";
 import { useSelector, useDispatch } from "react-redux";
 import { useAlert } from "react-alert";
 import {
-  getAllreviews,
+  getAllReviews,
   clearErrors,
   deleteProductReview,
 } from "../../actions/productAction";

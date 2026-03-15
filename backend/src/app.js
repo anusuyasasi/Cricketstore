@@ -11,7 +11,7 @@ require("dotenv").config({ path: "./config/config.env" });
 // Middlewares - CORS-ஐ மற்ற Routes-க்கு முன்பே போட வேண்டும்
 app.use(
   cors({
-    origin: "https://eclectic-beijinho-fb23db.netlify.app", // உங்கள் லோக்கல் ஹோஸ்ட் போர்ட் 3000 என்றால் இது சரி
+    origin: "https://rad-starlight-cf31fa.netlify.app", // உங்கள் லோக்கல் ஹோஸ்ட் போர்ட் 3000 என்றால் இது சரி
     credentials: true,               // Cookies அனுப்ப இது மிக அவசியம்
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
