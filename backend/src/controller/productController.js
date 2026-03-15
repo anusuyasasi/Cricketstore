@@ -52,22 +52,20 @@ exports.getAllProducts = asyncWrapper(async (req, res) => {
   const resultPerPage = 8;
   const productsCount = await ProductModel.countDocuments();
 
-  // 1. Initial Query setup
+  // 1. Initial Query setup with Search and Filter
   const apiFeature = new ApiFeatures(ProductModel.find(), req.query)
     .search()
     .filter();
 
-  // 2. Fetch products BEFORE pagination to get the correct filtered count
+  // 2. Fetch all filtered products BEFORE pagination to get the correct count
   let products = await apiFeature.query;
   let filteredProductCount = products.length;
 
-  // 3. Apply Pagination on a NEW execution
+  // 3. Apply Pagination and use .clone() to avoid execution errors
   apiFeature.Pagination(resultPerPage);
-
-  // 4. Use .clone() to avoid Mongoose "Query already executed" error
   products = await apiFeature.query.clone();
 
-  res.status(200).json({ // Changed status to 200 (Success)
+  res.status(200).json({
     success: true,
     products,
     productsCount,
@@ -80,7 +78,7 @@ exports.getAllProducts = asyncWrapper(async (req, res) => {
 exports.getAllProductsAdmin = asyncWrapper(async (req, res) => {
   const products = await ProductModel.find();
 
-  res.status(200).json({ // Changed status to 200
+  res.status(200).json({
     success: true,
     products,
   });
@@ -103,7 +101,6 @@ exports.updateProduct = asyncWrapper(async (req, res, next) => {
     }
 
     if (images.length > 0) {
-      // Deleting Images From Cloudinary
       for (let i = 0; i < product.images.length; i++) {
         await cloudinary.v2.uploader.destroy(product.images[i].product_id);
       }
