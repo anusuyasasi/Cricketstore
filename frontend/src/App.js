@@ -10,7 +10,6 @@ import PrivateRoute from "./component/Route/PrivateRoute";
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import "./App.css";
 
-// Components
 import Header from "./component/layouts/Header1.jsx/Header";
 import Payment from "./component/Cart/Payment";
 import Home from "./component/Home/Home";
@@ -37,7 +36,7 @@ import TermsUse from "./Terms&Condtions/TermsAndUse";
 import TermsAndConditions from "./Terms&Condtions/TermsCondtion";
 import PrivacyPolicy from "./Terms&Condtions/Privacy";
 
-// Admin Components (Lazy Loading)
+// Admin Components
 const LazyDashboard = React.lazy(() => import("./component/Admin/Dashboard"));
 const LazyProductList = React.lazy(() => import("./component/Admin/ProductList"));
 const LazyOrderList = React.lazy(() => import("./component/Admin/OrderList"));
@@ -48,20 +47,19 @@ const LazyUpdateUser = React.lazy(() => import("./component/Admin/UpdateUser"));
 const LazyNewProduct = React.lazy(() => import("./component/Admin/NewProduct"));
 const LazyProductReviews = React.lazy(() => import("./component/Admin/ProductReviews"));
 
-// --- Global Axios Configuration ---
-axios.defaults.withCredentials = true;
-
 function App() {
-  const [stripeApiKey, setStripeApiKey] = useState("");
+  // Hardcoded fallback key as requested
+  const [stripeApiKey, setStripeApiKey] = useState("pk_test_51T9jExJwp4hWB7oKBa55SdIiRrXLHX117D78RkaAycAJUXTu6E1ePHaf8Uovi3KvVqKHEC9IguZv4VGPkvFCrP44001MRnyLaf");
 
   const dispatch = useDispatch();
 
   async function getStripeApiKey() {
     try {
-      // API call with credentials
-      const { data } = await axios.get("https://cricketstore.onrender.com/api/v1/stripeapikey");
-      
-      if (data.stripeApiKey) {
+const { data } = await axios.get("https://cricketstore.onrender.com/api/v1/stripeapikey", {
+      withCredentials: true
+    });      if (data.stripeApiKey) {
+        // Correctly store raw string to avoid quote issues in loadStripe
+        sessionStorage.setItem("stripeApiKey", data.stripeApiKey);
         setStripeApiKey(data.stripeApiKey);
       }
     } catch (error) {
@@ -70,55 +68,54 @@ function App() {
   }
 
   useEffect(() => {
-    // 1. முதலாவதாக Session Storage-ல் இருக்கும் பழைய தப்பான யூசர் டேட்டாவை கிளியர் செய்துவிட்டு 
-    // ப்ரொபைலை லோட் செய்வது நல்லது (401 வராமல் இருக்க)
-    const userData = sessionStorage.getItem("user");
-    if (userData === "undefined" || userData === null) {
-        sessionStorage.removeItem("user");
-    }
-
     dispatch(load_UserProfile());
-    getStripeApiKey();
+    
+    const savedKey = sessionStorage.getItem("stripeApiKey");
+    if (savedKey) {
+      setStripeApiKey(savedKey);
+    } else {
+      getStripeApiKey();
+    }
   }, [dispatch]);
 
   return (
     <>
       <Router>
         <SpeedInsights />
-        <Header />
         <Switch>
           {/* Public Routes */}
-          <Route exact path="/" component={Home} />
-          <Route exact path="/product/:id" component={ProductDetails} />
-          <Route exact path="/products" component={Products} />
-          <Route path="/products/:keyword" component={Products} />
-          <Route exact path="/signup" component={Signup} />
-          <Route exact path="/login" component={Login} />
-          <Route exact path="/password/forgot" component={ForgetPassword} />
-          <Route exact path="/password/reset/:token" component={ResetPassword} />
-          <Route exact path="/cart" component={Cart} />
+          <Route exact path="/" render={() => (<><Header /><Home /><Services /><Footer /></>)} />
+          <Route exact path="/product/:id" render={() => (<><Header /><ProductDetails /><Services /><Footer /></>)} />
+          <Route exact path="/products" render={() => (<><Header /><Products /><Services /><Footer /></>)} />
+          <Route path="/products/:keyword" render={() => (<><Header /><Products /><Services /><Footer /></>)} />
+          <Route exact path="/signup" render={() => (<><Header /><Signup /><Services /><Footer /></>)} />
+          <Route exact path="/login" render={() => (<><Header /><Login /><Services /><Footer /></>)} />
+          <Route exact path="/password/forgot" render={() => (<><Header /><ForgetPassword /><Services /><Footer /></>)} />
+          <Route exact path="/password/reset/:token" render={() => (<><Header /><ResetPassword /><Services /><Footer /></>)} />
+          <Route exact path="/cart" render={() => (<><Header /><Cart /><Services /><Footer /></>)} />
           
           {/* Information & Policy Routes */}
-          <Route exact path="/policy/return" component={ReturnPolicyPage} />
-          <Route exact path="/policy/Terms" component={TermsUse} />
-          <Route exact path="/policy/privacy" component={PrivacyPolicy} />
-          <Route exact path="/terms/conditions" component={TermsAndConditions} />
-          <Route exact path="/contact" component={ContactForm} />
-          <Route exact path="/about_us" component={AboutUsPage} />
+          <Route exact path="/policy/return" render={() => (<><Header /><ReturnPolicyPage /><Services /><Footer /></>)} />
+          <Route exact path="/policy/Terms" render={() => (<><Header /><TermsUse /><Services /><Footer /></>)} />
+          <Route exact path="/policy/privacy" render={() => (<><Header /><PrivacyPolicy /><Services /><Footer /></>)} />
+          <Route exact path="/terms/conditions" render={() => (<><Header /><TermsAndConditions /><Services /><Footer /></>)} />
+          <Route exact path="/contact" render={() => (<><Header /><ContactForm /><Footer /></>)} />
+          <Route exact path="/about_us" render={() => (<><Header /><AboutUsPage /><Footer /></>)} />
 
           {/* User Private Routes */}
-          <PrivateRoute exact path="/account" component={Profile} />
-          <PrivateRoute exact path="/profile/update" component={UpdateProfile} />
-          <PrivateRoute exact path="/password/update" component={UpdatePassword} />
-          <PrivateRoute exact path="/orders" component={MyOrder} />
-          <PrivateRoute exact path="/shipping" component={Shipping} />
-          <PrivateRoute exact path="/order/confirm" component={ConfirmOrder} />
-          <PrivateRoute exact path="/success" component={OrderSuccess} />
+          <Route exact path="/account" render={() => (<><Header /><PrivateRoute exact path="/account" component={Profile} /><Services /><Footer /></>)} />
+          <Route exact path="/profile/update" render={() => (<><Header /><PrivateRoute exact path="/profile/update" component={UpdateProfile} /><Services /><Footer /></>)} />
+          <Route exact path="/password/update" render={() => (<><Header /><PrivateRoute exact path="/password/update" component={UpdatePassword} /><Services /><Footer /></>)} />
+          <Route exact path="/orders" render={() => (<><Header /><PrivateRoute exact path="/orders" component={MyOrder} /><Services /><Footer /></>)} />
+          <Route exact path="/shipping" render={() => (<><Header /><PrivateRoute exact path="/shipping" component={Shipping} /><Services /><Footer /></>)} />
+          <Route exact path="/order/confirm" render={() => (<><Header /><PrivateRoute exact path="/order/confirm" component={ConfirmOrder} /><Services /><Footer /></>)} />
+          <Route exact path="/success" render={() => (<><Header /><PrivateRoute exact path="/success" component={OrderSuccess} /><Services /><Footer /></>)} />
 
-          {/* Payment Route */}
+          {/* Payment Route - Wrapped with Elements Provider */}
           {stripeApiKey && (
             <Route exact path="/process/payment">
               <Elements stripe={loadStripe(stripeApiKey)}>
+                <Header />
                 <PrivateRoute exact path="/process/payment" component={Payment} />
               </Elements>
             </Route>
@@ -139,9 +136,6 @@ function App() {
             <PrivateRoute isAdmin={true} exact path="/admin/user/:id" component={LazyUpdateUser} />
           </Switch>
         </Suspense>
-
-        <Services />
-        <Footer />
       </Router>
     </>
   );
