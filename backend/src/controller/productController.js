@@ -56,27 +56,32 @@ exports.createProduct = asyncWrapper(async (req, res) => {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> get all product >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 exports.getAllProducts = asyncWrapper(async (req, res) => {
   const resultPerPage = 8;
+
   const productsCount = await ProductModel.countDocuments();
 
-  const apiFeature = new ApiFeatures(ProductModel.find(), req.query)
+  const countFeature = new ApiFeatures(ProductModel.find(), req.query)
     .search()
     .filter();
 
-  // /count filtered results
-  const filteredProductCount = await ProductModel.countDocuments(
-    apiFeature.query.getFilter()
+  const filteredProductsCount = await ProductModel.countDocuments(
+    countFeature.query.getFilter()
   );
- apiFeature.pagination(resultPerPage);
 
-  // Single clean query execution
+  const apiFeature = new ApiFeatures(ProductModel.find(), req.query)
+    .search()
+    .filter()
+    .pagination(resultPerPage);
+
   const products = await apiFeature.query;
 
   res.status(200).json({
     success: true,
-    products,
     productsCount,
+    filteredProductsCount,
     resultPerPage,
-    filteredProductCount,
+    currentPage: Number(req.query.page) || 1,
+    totalPages: Math.ceil(filteredProductsCount / resultPerPage),
+    products,
   });
 });
 
