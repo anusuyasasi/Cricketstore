@@ -35,38 +35,34 @@ import {
   DELETE_REVIEW_RESET,
 } from "../constants/productsConstatns";
 
-// 1. All Products Reducer
+// 1. அனைத்து தயாரிப்புகளுக்கான ரிடியூசர் (All Products)
 export const productsReducer = (state = { products: [] }, action) => {
   switch (action.type) {
     case ALL_PRODUCT_REQUEST:
     case ADMIN_PRODUCT_REQUEST:
       return {
         loading: true,
-        products: [], // லோட் ஆகும்போது பழைய டேட்டாவை காலி செய்கிறோம்
+        products: [],
       };
-
     case ALL_PRODUCT_SUCCESS:
       return {
         loading: false,
         products: action.payload.products,
         productsCount: action.payload.productsCount,
         resultPerPage: action.payload.resultPerPage,
-        filteredProductCount: action.payload.filteredProductCount, // ஸ்பெல்லிங் சரி செய்யப்பட்டது
+        filteredProductCount: action.payload.filteredProductCount,
       };
-
     case ADMIN_PRODUCT_SUCCESS:
       return {
         loading: false,
         products: action.payload,
       };
-
     case ALL_PRODUCT_FAIL:
     case ADMIN_PRODUCT_FAIL:
       return {
         loading: false,
         error: action.payload,
       };
-
     case CLEAR_ERRORS:
       return {
         ...state,
@@ -77,7 +73,7 @@ export const productsReducer = (state = { products: [] }, action) => {
   }
 };
 
-// 2. Product Details Reducer
+// 2. தயாரிப்பு விவரங்களுக்கான ரிடியூசர் (Product Details)
 export const productDetailsReducer = (state = { product: {} }, action) => {
   switch (action.type) {
     case PRODUCT_DETAILS_REQUEST:
@@ -88,7 +84,7 @@ export const productDetailsReducer = (state = { product: {} }, action) => {
     case PRODUCT_DETAILS_SUCCESS:
       return {
         loading: false,
-        product: action.payload.Product || action.payload, // Backend 'Product' என அனுப்பினால் அதை எடுக்கும்
+        product: action.payload.Product || action.payload,
         success: true,
       };
     case PRODUCT_DETAILS_FAIL:
@@ -112,7 +108,7 @@ export const productDetailsReducer = (state = { product: {} }, action) => {
   }
 };
 
-// 3. New Product Reducer (Admin)
+// 3. புதிய தயாரிப்பு உருவாக்க (New Product - Admin)
 export const newProductReducer = (state = { product: {} }, action) => {
   switch (action.type) {
     case NEW_PRODUCT_REQUEST:
@@ -147,12 +143,11 @@ export const newProductReducer = (state = { product: {} }, action) => {
   }
 };
 
-// 4. Delete and Update Reducer (Admin)
+// 4. தயாரிப்பை நீக்க மற்றும் மாற்றியமைக்க (Delete/Update Product - Admin)
 export const deleteUpdateReducer = (state = {}, action) => {
   switch (action.type) {
     case DELETE_PRODUCT_REQUEST:
     case UPDATE_PRODUCT_REQUEST:
-    case DELETE_REVIEW_REQUEST:
       return {
         ...state,
         loading: true,
@@ -169,15 +164,8 @@ export const deleteUpdateReducer = (state = {}, action) => {
         loading: false,
         isUpdated: action.payload,
       };
-    case DELETE_REVIEW_SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        isDeleted: action.payload,
-      };
     case DELETE_PRODUCT_FAIL:
     case UPDATE_PRODUCT_FAIL:
-    case DELETE_REVIEW_FAIL:
       return {
         ...state,
         loading: false,
@@ -193,11 +181,6 @@ export const deleteUpdateReducer = (state = {}, action) => {
         ...state,
         isUpdated: false,
       };
-    case DELETE_REVIEW_RESET:
-      return {
-        ...state,
-        isDeleted: false,
-      };
     case CLEAR_ERRORS:
       return {
         ...state,
@@ -208,7 +191,7 @@ export const deleteUpdateReducer = (state = {}, action) => {
   }
 };
 
-// 5. New Review Reducer
+// 5. புதிய விமர்சனம் (New Review)
 export const newReviewReducer = (state = {}, action) => {
   switch (action.type) {
     case NEW_REVIEW_REQUEST:
@@ -223,7 +206,6 @@ export const newReviewReducer = (state = {}, action) => {
       };
     case NEW_REVIEW_FAIL:
       return {
-        ...state,
         loading: false,
         error: action.payload,
       };
@@ -242,7 +224,7 @@ export const newReviewReducer = (state = {}, action) => {
   }
 };
 
-// 6. Get All Reviews Reducer (Admin)
+// 6. அனைத்து விமர்சனங்களையும் எடுக்க (Get All Reviews - Admin)
 export const getALLReviewReducer = (state = { reviews: [] }, action) => {
   switch (action.type) {
     case ALL_REVIEW_REQUEST:
@@ -260,6 +242,42 @@ export const getALLReviewReducer = (state = { reviews: [] }, action) => {
         ...state,
         loading: false,
         error: action.payload,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+// 7. விமர்சனத்தை நீக்க (Delete Review - Admin) 
+// இதுதான் உங்களுடைய 'store.jsx' எர்ரரைச் சரிசெய்யும் முக்கியப் பகுதி
+export const deleteReviewReducer = (state = {}, action) => {
+  switch (action.type) {
+    case DELETE_REVIEW_REQUEST:
+      return {
+        ...state,
+        loading: true,
+      };
+    case DELETE_REVIEW_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        isDeleted: action.payload,
+      };
+    case DELETE_REVIEW_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
+    case DELETE_REVIEW_RESET:
+      return {
+        ...state,
+        isDeleted: false,
       };
     case CLEAR_ERRORS:
       return {

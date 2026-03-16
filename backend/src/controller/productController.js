@@ -54,9 +54,9 @@ exports.createProduct = asyncWrapper(async (req, res) => {
 exports.getAllProducts = asyncWrapper(async (req, res) => {
     const resultPerPage = 8;
     const productsCount = await ProductModel.countDocuments();
-
+const products = await ProductModel.find();
     // 1. Prepare Features
-    const apiFeature = new ApiFeatures(ProductModel.find(), req.query)
+    const apiFeature = new ApiFeatures(products, req.query)
         .search()
         .filter();
 
