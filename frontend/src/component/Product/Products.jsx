@@ -14,13 +14,9 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import InventoryIcon from "@mui/icons-material/Inventory";
-
-
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
-
-
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 const categories = [
@@ -41,21 +37,23 @@ function Products() {
   const match = useRouteMatch();
   let keyword = match.params.keyword;
   const dispatch = useDispatch();
+  const alert = useAlert();
+
   const {
     products,
     loading,
     productsCount,
     error,
     resultPerPage,
-    // filterdProductCount,
+    filteredProductCount, // இதை Backend-ல் இருந்து பெறுவதை உறுதி செய்யவும்
   } = useSelector((state) => state.products);
-  const alert = useAlert();
 
- const [currentPage, setCurrentPage] = React.useState(1);
-  const [price, setPrice] = React.useState([0, 100000]); // initial limit from min=0 to max=100000
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [price, setPrice] = React.useState([0, 100000]);
   const [category, setCategory] = React.useState("");
   const [ratings, setRatings] = React.useState(0);
   const [selectedCategory, setSelectedCategory] = React.useState("");
+  const [selectedRating, setSelectedRating] = React.useState("all");
 
   useEffect(() => {
     if (error) {
@@ -63,34 +61,30 @@ function Products() {
       dispatch(clearErrors());
     }
     dispatch(getProduct(keyword, currentPage, price, category, ratings));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, keyword, currentPage, price, ratings, category]);
+  }, [dispatch, keyword, currentPage, price, ratings, category, alert, error]);
 
   const setCurrentPageNoHandler = (e) => {
-    setCurrentPage(e); // e is the clicked page value
+    setCurrentPage(e);
   };
 
   const priceHandler = (event, newPrice) => {
     setPrice(newPrice);
   };
+
   const handleCategoryChange = (category) => {
-    setCategory(category);
-    setSelectedCategory(category);
-    // Perform any additional actions or filtering based on the selected category
+    setCategory(category === selectedCategory ? "" : category); // Toggle category
+    setSelectedCategory(category === selectedCategory ? "" : category);
+    setCurrentPage(1); // Filter மாறும்போது முதல் பக்கத்திற்கு செல்லவும்
   };
 
+  const handleRatingChange = (event) => {
+    setRatings(event.target.value);
+    setSelectedRating(event.target.value);
+    setCurrentPage(1);
+  };
 
-
-const [selectedRating, setSelectedRating] = React.useState("all");
-
-const handleRatingChange = (event) => {
-  setRatings(event.target.value);
-  setSelectedRating(event.target.value);
-  // Trigger filtering with the selected rating value or perform any other action
-  
-};
-
- 
+  // Pagination-க்கான கவுண்ட் (பில்டர் செய்யப்பட்டிருந்தால் அதன் எண்ணிக்கையை எடுக்கவும்)
+  let count = filteredProductCount !== undefined ? filteredProductCount : productsCount;
 
   return (
     <>
@@ -99,49 +93,38 @@ const handleRatingChange = (event) => {
       ) : (
         <>
           <MetaData title="PRODUCTS --Ecart" />
-          {products === undefined || products.length === 0 ? (
-            <>
-              <div
-                className="emptyCartContainer "
-                style={{ marginTop: "5rem", background: "white" }}
+          
+          {/* Product Not Found Logic */}
+          {!products || products.length === 0 ? (
+            <div
+              className="emptyCartContainer"
+              style={{ marginTop: "5rem", background: "white" }}
+            >
+              <InventoryIcon className="cartIcon" />
+              <Typography variant="h5" component="h1" className="cartHeading">
+                Product Not Found
+              </Typography>
+              <Typography variant="body1" className="cartText">
+                Nothin' to see here.
+              </Typography>
+              <Typography variant="body1" className="cartText">
+                There is no product with this criteria.
+              </Typography>
+              <Button
+                className="shopNowButton"
+                onClick={() => window.location.reload()}
+                style={{ width: "7rem", marginTop: "1rem" }}
               >
-                <InventoryIcon className="cartIcon" />
-
-                <Typography variant="h5" component="h1" className="cartHeading">
-                  Product Not Found
-                </Typography>
-                <Typography variant="body" className="cartText">
-                  Nothin' to see here.
-                </Typography>
-                <Typography variant="body" className="cartText">
-                  There is no product with this name
-                </Typography>
-
-                <Button
-                  className="shopNowButton"
-                  onClick={() => window.location.reload()}
-                  style={{ width: "7rem" }}
-                >
-                  Refresh
-                </Button>
-              </div>
-            </>
+                Refresh
+              </Button>
+            </div>
           ) : (
             <div className="productPage">
               <div className="prodcutPageTop">
                 <div className="filterBox">
-                  {/* Price */}
+                  {/* Price Filter */}
                   <div className="priceFilter">
-                    <Typography
-                      style={{
-                        fontSize: "18px",
-                        padding: "5px",
-                        fontWeight: 700,
-                        color: "#414141",
-                      }}
-                    >
-                      Price
-                    </Typography>
+                    <Typography className="filterHeading">Price</Typography>
                     <div className="priceSlider">
                       <Slider
                         value={price}
@@ -157,42 +140,24 @@ const handleRatingChange = (event) => {
                       <div className="priceSelector">
                         <Select
                           value={price[0]}
-                          onChange={(e) =>
-                            setPrice([+e.target.value, price[1]])
-                          }
+                          onChange={(e) => setPrice([+e.target.value, price[1]])}
                           className="priceOption"
                           IconComponent={ArrowDropDownIcon}
-                          renderValue={(selected) =>
-                            selected !== "" ? selected : "min"
-                          } // Display "min" as default label
                         >
-                          <MenuItem value={5000} className="menu_item">
-                            5000
-                          </MenuItem>
-                          <MenuItem value={10000} className="menu_item">
-                            10000
-                          </MenuItem>
-                          {/* Add more options as per your requirement */}
+                          <MenuItem value={0}>0</MenuItem>
+                          <MenuItem value={5000}>5000</MenuItem>
+                          <MenuItem value={10000}>10000</MenuItem>
                         </Select>
                         <span className="toText">to</span>
                         <Select
                           value={price[1]}
-                          onChange={(e) =>
-                            setPrice([price[0], +e.target.value])
-                          }
+                          onChange={(e) => setPrice([price[0], +e.target.value])}
                           className="priceOption"
                           IconComponent={ArrowDropDownIcon}
-                          renderValue={(selected) =>
-                            selected !== "" ? selected : "max"
-                          }
                         >
-                          <MenuItem value={50000} className="menu_item">
-                            50000
-                          </MenuItem>
-                          <MenuItem value={20000} className="menu_item">
-                            20000
-                          </MenuItem>
-                          {/* Add more options as per your requirement */}
+                          <MenuItem value={20000}>20000</MenuItem>
+                          <MenuItem value={50000}>50000</MenuItem>
+                          <MenuItem value={100000}>100000</MenuItem>
                         </Select>
                       </div>
                     </div>
@@ -200,34 +165,20 @@ const handleRatingChange = (event) => {
 
                   <div className="filter_divider"></div>
 
-                  {/* Categories */}
+                  {/* Categories Filter */}
                   <div className="categoriesFilter">
-                    <Typography
-                      style={{
-                        fontSize: "18px",
-                        padding: "10px",
-                        fontWeight: 700,
-                        color: "#414141",
-                      }}
-                    >
-                      Categories
-                    </Typography>
+                    <Typography className="filterHeading">Categories</Typography>
                     <ul className="categoryBox">
-                      {categories.map((category, index) => (
+                      {categories.map((cat, index) => (
                         <li className="category-link" key={index}>
-                          <label
-                            htmlFor={`category-${index}`}
-                            className="category-label"
-                          >
+                          <label className="category-label">
                             <input
                               type="checkbox"
-                              id={`category-${index}`}
                               className="category-checkbox"
-                              value={category}
-                              checked={category === selectedCategory}
-                              onChange={() => handleCategoryChange(category)}
+                              checked={cat === selectedCategory}
+                              onChange={() => handleCategoryChange(cat)}
                             />
-                            {category}
+                            {cat}
                           </label>
                         </li>
                       ))}
@@ -235,57 +186,33 @@ const handleRatingChange = (event) => {
                   </div>
 
                   <div className="filter_divider"></div>
-                  {/* Ratings */}
+
+                  {/* Ratings Filter */}
                   <div className="ratingsFilter">
-                    <Typography
-                      style={{
-                        fontSize: "18px",
-                        padding: "10px",
-                        fontWeight: 700,
-                        color: "#414141",
-                      }}
-                    >
-                      Ratings Above
-                    </Typography>
+                    <Typography className="filterHeading">Ratings Above</Typography>
                     <RadioGroup
                       value={selectedRating}
                       onChange={handleRatingChange}
-                      row
                       className="ratingsBox"
                     >
-                      <FormControlLabel
-                        value="4"
-                        control={<Radio />}
-                        label="4★ & above"
-                      />
-                      <FormControlLabel
-                        value="3"
-                        control={<Radio />}
-                        label="3★ & above"
-                      />
-                      <FormControlLabel
-                        value="2"
-                        control={<Radio />}
-                        label="2★ & above"
-                      />
+                      <FormControlLabel value="4" control={<Radio />} label="4★ & above" />
+                      <FormControlLabel value="3" control={<Radio />} label="3★ & above" />
+                      <FormControlLabel value="2" control={<Radio />} label="2★ & above" />
+                      <FormControlLabel value="0" control={<Radio />} label="All" />
                     </RadioGroup>
                   </div>
-                  <div className="filter_divider"></div>
-                  {/* Clear Filters */}
                 </div>
 
-                <div
-                  className={products.length < 2 ? "products1" : "products"}
-                >
-                  {products &&
-                    products.map((product) => (
-                      <ProductCard key={product._id} product={product} />
-                    ))}
+                {/* Product Display Grid */}
+                <div className={products.length < 3 ? "products1" : "products"}>
+                  {products.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
                 </div>
               </div>
 
-              {/* Pagination */}
-       
+              {/* Pagination Box */}
+              {resultPerPage < count && (
                 <div className="paginationBox">
                   <Pagination
                     activePage={currentPage}
@@ -302,7 +229,7 @@ const handleRatingChange = (event) => {
                     activeLinkClass="pageLinkActive"
                   />
                 </div>
-             
+              )}
             </div>
           )}
         </>
