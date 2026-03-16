@@ -54,6 +54,7 @@ exports.createProduct = asyncWrapper(async (req, res) => {
 });
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> get all product >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 exports.getAllProducts = asyncWrapper(async (req, res) => {
   const resultPerPage = 8;
 
