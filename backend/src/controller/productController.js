@@ -1,7 +1,11 @@
 const ProductModel = require("../model/ProductModel");
 const ErrorHandler = require("../utils/errorHandler");
 const asyncWrapper = require("../middleWare/asyncWrapper");
-const ApiFeatures = require("../utils/apiFeatures");
+const {
+  ProductQuery,
+  getPagination,
+  getProductMeta,
+} = require("../utils/apiFeatures");
 const cloudinary = require("cloudinary");
 
 // >>>>>>>>>>>>>>>>>>>>> createProduct Admin route  >>>>>>>>>>>>>>>>>>>>>>>>
@@ -56,36 +60,42 @@ exports.createProduct = asyncWrapper(async (req, res) => {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> get all product >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 exports.getAllProducts = asyncWrapper(async (req, res) => {
-  const resultPerPage = Number(req.query.limit) || 10;
+  const query = ProductQuery(req.query);
+
+  const { currentPage, resultPerPage, skip } = getPagination(
+    req.query.page,
+    req.query.limit,
+  );
 
   const productsCount = await ProductModel.countDocuments();
 
-  const countFeature = new ApiFeatures(ProductModel.find(), req.query)
-    .search()
-    .filter();
+  const filteredProductsCount = await ProductModel.countDocuments(query);
 
-  const filteredProductsCount = await ProductModel.countDocuments(
-    countFeature.query.getFilter()
+  const products = await ProductModel.find(query)
+    .skip(skip)
+    .limit(resultPerPage)
+    .sort({ createdAt: -1 });
+
+  if (!products.length) {
+    return res.status(404).json({
+      success: false,
+      message: "No products found matching the filter criteria",
+    });
+  }
+
+  const meta = getProductMeta(
+    productsCount,
+    filteredProductsCount,
+    currentPage,
+    resultPerPage,
   );
-
-  const apiFeature = new ApiFeatures(ProductModel.find(), req.query)
-    .search()
-    .filter()
-    .pagination();
-
-  const products = await apiFeature.query;
 
   res.status(200).json({
     success: true,
-    productsCount,
-    filteredProductsCount,
-    resultPerPage,
-    currentPage: Number(req.query.page) || 1,
-    totalPages: Math.ceil(filteredProductsCount / resultPerPage),
+    meta,
     products,
   });
 });
-
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> get all product admin route>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
