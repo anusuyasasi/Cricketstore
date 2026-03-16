@@ -1,50 +1,49 @@
-class ApiFeatures {
-  constructor(query, queryString) {
-    this.query = query;
-    this.queryString = queryString;
-    this.filterConditions = {};
+exports.ProductQuery = (queryParams) => {
+  const { search, priceMin, priceMax, avgRating } = queryParams;
+
+  const query = {};
+
+  if (search) {
+    query.category = search;
   }
 
-  search() {
-    const { search } = this.queryString;
-
-    if (search) {
-      this.filterConditions.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    return this;
+  if (priceMin || priceMax) {
+    query.price = {};
+    if (priceMin) query.price.$gte = Number(priceMin);
+    if (priceMax) query.price.$lte = Number(priceMax);
   }
 
-  filter() {
-    const { priceMin, priceMax, ratingMin } = this.queryString;
-
-    if (priceMin || priceMax) {
-      this.filterConditions.price = {};
-      if (priceMin) this.filterConditions.price.$gte = Number(priceMin);
-      if (priceMax) this.filterConditions.price.$lte = Number(priceMax);
-    }
-
-    if (ratingMin) {
-      this.filterConditions.ratings = { $gte: Number(ratingMin) };
-    }
-
-    this.query = this.query.find(this.filterConditions);
-
-    return this;
+  if (avgRating) {
+    query.ratings = { $gte: Number(avgRating) };
   }
 
-  pagination() {
-    const currentPage = Number(this.queryString.page) || 1;
-    const resultPerPage = Number(this.queryString.limit) || 10;
-    const skip = resultPerPage * (currentPage - 1);
+  return query;
+};
 
-    this.query = this.query.skip(skip).limit(resultPerPage);
+exports.getPagination = (page = 1, limit = 10) => {
+  const currentPage = Number(page);
+  const resultPerPage = Number(limit);
 
-    return this;
-  }
-}
+  const skip = (currentPage - 1) * resultPerPage;
 
-module.exports = ApiFeatures;
+  return {
+    currentPage,
+    resultPerPage,
+    skip,
+  };
+};
+
+exports.getProductMeta = (
+  productsCount,
+  filteredProductsCount,
+  currentPage,
+  resultPerPage,
+) => {
+  return {
+    totalProducts: productsCount,
+    filteredProducts: filteredProductsCount,
+    resultPerPage,
+    currentPage,
+    totalPages: Math.ceil(filteredProductsCount / resultPerPage),
+  };
+};
