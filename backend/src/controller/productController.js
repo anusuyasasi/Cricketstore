@@ -56,7 +56,7 @@ exports.createProduct = asyncWrapper(async (req, res) => {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> get all product >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 exports.getAllProducts = asyncWrapper(async (req, res) => {
-  const resultPerPage = 8;
+  const resultPerPage = Number(req.query.limit) || 10;
 
   const productsCount = await ProductModel.countDocuments();
 
@@ -71,7 +71,7 @@ exports.getAllProducts = asyncWrapper(async (req, res) => {
   const apiFeature = new ApiFeatures(ProductModel.find(), req.query)
     .search()
     .filter()
-    .pagination(resultPerPage);
+    .pagination();
 
   const products = await apiFeature.query;
 
@@ -85,7 +85,6 @@ exports.getAllProducts = asyncWrapper(async (req, res) => {
     products,
   });
 });
-
 
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> get all product admin route>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

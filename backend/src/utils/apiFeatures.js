@@ -1,5 +1,3 @@
-// utils/ApiFeatures.js
-
 class ApiFeatures {
   constructor(query, queryString) {
     this.query = query;
@@ -8,12 +6,12 @@ class ApiFeatures {
   }
 
   search() {
-    const { keyword } = this.queryString;
+    const { search } = this.queryString;
 
-    if (keyword) {
+    if (search) {
       this.filterConditions.$or = [
-        { name: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -21,25 +19,26 @@ class ApiFeatures {
   }
 
   filter() {
-    const queryCopy = { ...this.queryString };
+    const { priceMin, priceMax, ratingMin } = this.queryString;
 
-    const excludedFields = ["keyword", "page", "limit"];
-    excludedFields.forEach((field) => delete queryCopy[field]);
+    if (priceMin || priceMax) {
+      this.filterConditions.price = {};
+      if (priceMin) this.filterConditions.price.$gte = Number(priceMin);
+      if (priceMax) this.filterConditions.price.$lte = Number(priceMax);
+    }
 
-    let queryStr = JSON.stringify(queryCopy);
-    queryStr = queryStr.replace(/\b(gte|lte|gt|lt)\b/g, (match) => `$${match}`);
-
-    const parsedFilters = JSON.parse(queryStr);
-
-    this.filterConditions = { ...this.filterConditions, ...parsedFilters };
+    if (ratingMin) {
+      this.filterConditions.ratings = { $gte: Number(ratingMin) };
+    }
 
     this.query = this.query.find(this.filterConditions);
 
     return this;
   }
 
-  pagination(resultPerPage) {
+  pagination() {
     const currentPage = Number(this.queryString.page) || 1;
+    const resultPerPage = Number(this.queryString.limit) || 10;
     const skip = resultPerPage * (currentPage - 1);
 
     this.query = this.query.skip(skip).limit(resultPerPage);
