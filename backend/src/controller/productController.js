@@ -67,7 +67,7 @@ exports.getAllProducts = asyncWrapper(async (req, res) => {
 
   let filteredProductCount = products.length; // Number of products after filtering (for pagination)
 
-  apiFeature.Pagination(resultPerPage); // Apply pagination to the products
+  apiFeature.pagination(resultPerPage); // Apply pagination to the products
 
   // Mongoose no longer allows executing the same query object twice, so use .clone() to retrieve the products again
   products = await apiFeature.query.clone(); // Retrieve the paginated products
