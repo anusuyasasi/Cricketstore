@@ -42,12 +42,13 @@ export const getProduct = (
     try {
       dispatch({ type: ALL_PRODUCT_REQUEST });
 
-      let link = `https://cricketstore.onrender.com/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}`;
+      let link = `https://cricketstore.onrender.com/api/v1/product?search=${category}&priceMin=${price[0]}&priceMax=${price[1]}&avgRating=${ratings}&page=${currentPage}&limit=10`;
 
-      if (category) {
-        link = `https://cricketstore.onrender.com/api/v1/product?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratings}&category=${category}`;
+      if (!category) {
+        link = `https://cricketstore.onrender.com/api/v1/product`
       }
       const { data } = await axios.get(link);
+      
 
       dispatch({
         type: ALL_PRODUCT_SUCCESS,
